@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Build-a-Champion — Wimbledon</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+  :root{
+    color-scheme:dark;
+    --bg:#0d0d10; --panel:#16161b; --panel2:#1d1d24; --line:#2b2b34;
+    --ink:#f4f1ea; --muted:#a8a298; --amber:#ffb33b; --amber-soft:#3a2c12;
+    --green:#5fd08a; --red:#ff6f6f; --blue:#7db8ff; --grass:#6fae5a;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'Hanken Grotesk',system-ui,sans-serif;
+    line-height:1.5; padding:26px 20px 70px;}
+  .wrap{max-width:780px; margin:0 auto;}
+  h1{font-family:'Fraunces',serif; font-weight:800; font-size:30px; margin:0; letter-spacing:-.01em;}
+  h1 .leaf{color:var(--grass);}
+  .sub{color:var(--muted); font-size:14px; margin:2px 0 22px;}
+  .mono{font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums;}
+
+  /* slot board */
+  .board{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px;}
+  @media(max-width:560px){ .board{grid-template-columns:repeat(2,1fr);} }
+  .slot{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 13px; min-height:78px;}
+  .slot .nm{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;}
+  .slot .v{font-family:'JetBrains Mono',monospace; font-size:30px; font-weight:600; line-height:1.1; margin-top:3px;}
+  .slot .src{font-size:11.5px; color:var(--amber); margin-top:1px; min-height:15px;}
+  .slot.empty{border-style:dashed; opacity:.6;}
+  .slot.empty .v{color:var(--muted); font-size:20px; padding-top:7px;}
+  .slot.just{border-color:var(--amber); box-shadow:0 0 0 1px var(--amber);}
+
+  /* six-reel draft board (player token per category) */
+  .reels{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;}
+  @media(max-width:640px){ .reels{grid-template-columns:repeat(2,1fr);} }
+  .reel{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:11px; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:7px; position:relative; min-height:196px;
+    transition:transform .14s, border-color .14s, box-shadow .14s;}
+  .reel .cat{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; font-weight:600;}
+  .reel .tok{width:64px; height:64px; border-radius:50%; overflow:hidden; border:1px solid var(--line);
+    background:var(--panel2); display:block;}
+  .reel .pnm{font-size:12px; font-weight:600; line-height:1.15; min-height:28px; display:flex; align-items:center;}
+  .reel .val{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:600; line-height:1;}
+  .reel .lockbtn{font-size:11.5px; font-weight:700; padding:6px 12px; background:var(--amber); color:#0d0d10; border-radius:8px; width:100%;}
+  .reel .lockbtn:disabled{opacity:.4; cursor:default;}
+  .reel.pickable{cursor:pointer;}
+  .reel.pickable:hover{border-color:var(--amber); transform:translateY(-2px); box-shadow:0 8px 20px -10px rgba(255,179,59,.55);}
+  .reel.pickable:hover .lockbtn{background:#ffc257;}
+  /* locked state: attribute chosen, reel frozen */
+  .reel.locked{border-color:#2f5a3f; background:linear-gradient(180deg,var(--panel),#14251b);}
+  .reel.locked .lockbtn{background:var(--panel2); color:var(--green); border:1px solid #2f5a3f;}
+  .reel.locked .src{font-size:11px; color:var(--green); font-weight:600;}
+  .reel .src{min-height:15px;}
+  .reel.spinning .tok{animation:reelblur .5s linear;}
+  .reel.spinning .val,.reel.spinning .pnm{animation:reelflick .5s steps(1) both;}
+  @keyframes reelblur{0%{filter:blur(2px);opacity:.6;transform:translateY(-4px);}100%{filter:none;opacity:1;transform:none;}}
+  @keyframes reelflick{0%{opacity:.35;}100%{opacity:1;}}
+
+  /* licence-clean player token (silhouette + country + initials) */
+  .tok svg{display:block; width:100%; height:100%;}
+  .tok .mono{font-family:'JetBrains Mono',monospace; font-weight:600;}
+
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px;}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+
+  button{font-family:inherit; cursor:pointer; border-radius:11px; border:none; color:inherit;}
+  .spin{background:var(--amber); color:#0d0d10; font-weight:700; font-size:16px; padding:13px 22px;}
+  .spin:disabled{opacity:.4; cursor:default;}
+  .ghost{background:var(--panel2); color:var(--muted); border:1px solid var(--line); font-weight:600; font-size:13px; padding:9px 14px;}
+  .spin:active,.ghost:active{transform:translateY(1px);}
+
+  /* spun player */
+  .spun{display:none; margin-top:4px;}
+  .spun .who{display:flex; align-items:baseline; gap:10px; margin-bottom:4px;}
+  .spun .who .pn{font-family:'Fraunces',serif; font-weight:600; font-size:21px;}
+  .spun .who .arch{font-size:12.5px; color:var(--muted);}
+  .hint{font-size:12.5px; color:var(--muted); margin-bottom:12px;}
+  .attrs{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
+  @media(max-width:560px){ .attrs{grid-template-columns:repeat(2,1fr);} }
+  .attr{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; text-align:left;
+    transition:.12s; width:100%;}
+  .attr .ak{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+  .attr .av{font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:600; margin-top:2px;}
+  .attr.pick{border-color:var(--amber);} .attr.pick:hover{background:var(--amber-soft);}
+  .attr.locked{opacity:.34; cursor:default;}
+  .attr.locked .ak::after{content:' · taken'; color:var(--amber);}
+
+  /* run */
+  .levers{display:flex; gap:10px; margin:14px 0;}
+  .lev{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
+  .lev .k{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+  .lev .vv{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:600;}
+  .round{display:flex; align-items:center; gap:11px; background:var(--panel); border:1px solid var(--line);
+    border-radius:11px; padding:10px 13px; margin-bottom:7px;}
+  .round.win{border-color:#2f5a3f;} .round.loss{border-color:#5a2f2f;} .round.dnp{opacity:.3;}
+  .round .rd{width:34px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+  .round .opp{flex:1;} .round .opp .nm{font-weight:600; font-size:14px;} .round .opp .ov{font-size:11px; color:var(--muted);}
+  .round .odds{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--blue); width:48px; text-align:right;}
+  .round .score{font-family:'JetBrains Mono',monospace; font-size:13px; width:104px; text-align:right;}
+  .round .score.w{color:var(--green);} .round .score.l{color:var(--red);}
+  .verdict{font-family:'Fraunces',serif; font-size:22px; font-weight:600; margin:14px 0 2px; text-align:center;}
+  .verdict.title{color:var(--amber);} .verdict.out{color:var(--muted);}
+  .verdict-sub{text-align:center; font-size:13px; color:var(--muted);}
+
+  /* meta */
+  .spins{font-size:12.5px; color:var(--muted); margin-left:auto;} .spins b{color:var(--ink); font-family:'JetBrains Mono',monospace;}
+  .xfac{display:none; gap:18px; margin-top:12px; font-size:12.5px; color:var(--muted);}
+  .xfac .mtr{font-family:'JetBrains Mono',monospace; letter-spacing:1px; color:var(--amber);}
+  .levers{flex-wrap:wrap;} .lev{min-width:88px;}
+  .round .rd .bo5{display:block; font-size:9px; color:var(--amber); letter-spacing:.05em;}
+  .spun{animation:fadein .22s ease;}
+  .verdict{animation:fadein .3s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+  .slot.just{animation:pop .32s ease;}
+  @keyframes pop{0%{transform:scale(1);} 42%{transform:scale(1.06);} 100%{transform:scale(1);}}
+  .attr.pick{transition:.12s;} .attr.pick:hover{transform:translateY(-2px);}
+  /* share + notices */
+  .share{margin-top:14px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:14px;}
+  .share pre{font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.5; white-space:pre-wrap; margin:0 0 11px; color:var(--ink);}
+  .copybtn{background:var(--green); color:#0d0d10; font-weight:700; font-size:13px; padding:10px 16px;}
+  .copybtn.done{background:var(--blue);}
+  .notice{background:var(--amber-soft); border:1px solid var(--amber); color:var(--amber); border-radius:10px; padding:11px 13px; font-size:13px; margin-bottom:14px;}
+  .disclaimer{font-size:11px; color:var(--muted); line-height:1.5; margin:22px 0 4px; padding-top:14px; border-top:1px solid var(--line);}
+  .consent{font-size:11.5px; color:var(--muted); margin-top:18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .consent .ghost{padding:6px 10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Build-a-Champion <span class="leaf">·</span> Wimbledon</h1>
+  <div class="sub">Six reels, six shots. Each spin deals a different legend from 20 years of Wimbledon into every category. Pick one shot to lock it in and the reels re-deal automatically — you get three respins if you don't fancy the hand. Fill all six and you're straight into the draw.</div>
+
+  <div class="panel" id="draftPanel">
+    <div class="reels" id="reels"></div>
+    <div class="row">
+      <button class="spin" id="spinBtn">🎾 Spin the reels</button>
+      <div class="spins" id="spinsLeft"></div>
+    </div>
+    <div class="xfac" id="xfac"></div>
+  </div>
+
+  <div class="panel" id="enterPanel" style="display:none;">
+    <div class="levers">
+      <div class="lev"><div class="k">Overall</div><div class="vv mono" id="ovr">—</div></div>
+      <div class="lev"><div class="k">Hold</div><div class="vv mono" id="hold">—</div></div>
+      <div class="lev"><div class="k">Return</div><div class="vv mono" id="ret">—</div></div>
+      <div class="lev"><div class="k">Composure</div><div class="vv mono" id="comp">—</div></div>
+      <div class="lev"><div class="k">Stamina</div><div class="vv mono" id="stam">—</div></div>
+    </div>
+    <button class="spin" id="enterBtn" style="width:100%;">Enter the Wimbledon draw →</button>
+    <div id="run" style="margin-top:14px;"></div>
+    <button class="spin" id="playAgainBtn" style="width:100%; margin-top:14px;">🎾 Play again</button>
+  </div>
+
+  <div class="consent" id="consent" style="display:none;"></div>
+
+  <div class="disclaimer" id="disclaimer">
+    <strong>Unofficial fan project.</strong> Not affiliated with, endorsed by, or associated with the
+    All England Lawn Tennis Club (AELTC), Wimbledon, the ATP, the WTA, or any player. Player names are used
+    for identification only; no player endorsement is implied. Ratings are an <em>editorial, data-informed
+    prototype</em> derived from historical match facts (results and scorelines) for entertainment — they are
+    approximations, not official statistics. Serve, return, forehand, backhand and net ratings are derived
+    from non-commercial data sources and are a development prototype pending data licensing before any
+    commercial release.
+  </div>
+</div>
+
+<script>
+// ============ THE DATA: 20 years of Wimbledon (2006-2018 ATP / 2006-2015 WTA) ============
+// Data-informed prototype produced by the wimbledon-ratings pipeline (see that project).
+// Ratings are derived from historical match facts; serve/ret/fh/bh/net use non-commercial
+// source data (prototype, pending licensing); con/clutch/stam/archetype/country are clean.
+// keys: n=name, a=archetype, c=country(IOC), t=tour; serve,ret,fh,bh,net,con,clutch,stam (0-100)
+const ROSTER=[
+  {n:"Alexander Zverev",a:"Return + Consistency",c:"GER",t:"atp",serve:60,ret:84,fh:68,bh:68,net:60,con:79,clutch:73,stam:51},
+  {n:"Andreas Seppi",a:"Return specialist",c:"ITA",t:"atp",serve:49,ret:86,fh:46,bh:56,net:67,con:56,clutch:68,stam:71},
+  {n:"Andy Murray",a:"Return + Consistency",c:"GBR",t:"atp",serve:78,ret:97,fh:89,bh:90,net:76,con:95,clutch:92,stam:94},
+  {n:"Andy Roddick",a:"Forehand + Serve",c:"USA",t:"atp",serve:92,ret:52,fh:95,bh:77,net:57,con:91,clutch:83,stam:84},
+  {n:"Arnaud Clement",a:"Net + Return",c:"FRA",t:"atp",serve:53,ret:68,fh:49,bh:52,net:70,con:48,clutch:47,stam:58},
+  {n:"David Ferrer",a:"Return specialist",c:"ESP",t:"atp",serve:53,ret:91,fh:66,bh:79,net:74,con:81,clutch:51,stam:70},
+  {n:"David Nalbandian",a:"Return specialist",c:"ARG",t:"atp",serve:48,ret:84,fh:57,bh:66,net:75,con:67,clutch:70,stam:66},
+  {n:"Dmitry Tursunov",a:"Net + Serve",c:"RUS",t:"atp",serve:56,ret:54,fh:50,bh:48,net:62,con:47,clutch:77,stam:69},
+  {n:"Dominic Thiem",a:"Net specialist",c:"AUT",t:"atp",serve:68,ret:63,fh:53,bh:54,net:78,con:57,clutch:54,stam:58},
+  {n:"Feliciano Lopez",a:"Serve specialist",c:"ESP",t:"atp",serve:87,ret:48,fh:71,bh:69,net:79,con:72,clutch:80,stam:71},
+  {n:"Fernando Verdasco",a:"All-court",c:"ESP",t:"atp",serve:63,ret:64,fh:57,bh:56,net:59,con:62,clutch:52,stam:61},
+  {n:"Florian Mayer",a:"Return + Backhand",c:"GER",t:"atp",serve:53,ret:63,fh:55,bh:61,net:44,con:61,clutch:85,stam:74},
+  {n:"Gilles Muller",a:"Net + Serve",c:"LUX",t:"atp",serve:85,ret:44,fh:76,bh:59,net:91,con:62,clutch:68,stam:56},
+  {n:"Gilles Simon",a:"Return specialist",c:"FRA",t:"atp",serve:47,ret:80,fh:57,bh:65,net:58,con:63,clutch:64,stam:57},
+  {n:"Grigor Dimitrov",a:"Forehand + Net",c:"BUL",t:"atp",serve:66,ret:77,fh:83,bh:74,net:80,con:73,clutch:78,stam:72},
+  {n:"Ivan Ljubicic",a:"Serve specialist",c:"CRO",t:"atp",serve:80,ret:48,fh:69,bh:60,net:59,con:63,clutch:58,stam:55},
+  {n:"Ivo Karlovic",a:"Serve specialist",c:"CRO",t:"atp",serve:96,ret:41,fh:80,bh:56,net:75,con:68,clutch:67,stam:62},
+  {n:"Janko Tipsarevic",a:"Net + Serve",c:"SRB",t:"atp",serve:67,ret:54,fh:53,bh:50,net:69,con:53,clutch:74,stam:57},
+  {n:"Jo Wilfried Tsonga",a:"Serve + Consistency",c:"FRA",t:"atp",serve:84,ret:57,fh:81,bh:66,net:73,con:82,clutch:71,stam:80},
+  {n:"John Isner",a:"Serve specialist",c:"USA",t:"atp",serve:94,ret:42,fh:64,bh:48,net:67,con:65,clutch:70,stam:46},
+  {n:"Juan Carlos Ferrero",a:"Net + Consistency",c:"ESP",t:"atp",serve:57,ret:59,fh:66,bh:70,net:76,con:73,clutch:74,stam:75},
+  {n:"Juan Martin Del Potro",a:"Return + Consistency",c:"ARG",t:"atp",serve:69,ret:84,fh:79,bh:73,net:64,con:82,clutch:64,stam:80},
+  {n:"Jurgen Melzer",a:"Return specialist",c:"AUT",t:"atp",serve:52,ret:70,fh:47,bh:55,net:52,con:52,clutch:64,stam:71},
+  {n:"Kei Nishikori",a:"Return specialist",c:"JPN",t:"atp",serve:49,ret:90,fh:52,bh:65,net:72,con:62,clutch:70,stam:67},
+  {n:"Kevin Anderson",a:"Serve specialist",c:"RSA",t:"atp",serve:82,ret:47,fh:65,bh:56,net:61,con:59,clutch:71,stam:59},
+  {n:"Lleyton Hewitt",a:"Return + Consistency",c:"AUS",t:"atp",serve:61,ret:94,fh:87,bh:87,net:77,con:89,clutch:66,stam:74},
+  {n:"Lucas Pouille",a:"Net specialist",c:"FRA",t:"atp",serve:64,ret:48,fh:53,bh:40,net:77,con:51,clutch:77,stam:70},
+  {n:"Marat Safin",a:"Consistency + Net",c:"RUS",t:"atp",serve:63,ret:61,fh:58,bh:58,net:64,con:68,clutch:64,stam:73},
+  {n:"Marcos Baghdatis",a:"Return specialist",c:"CYP",t:"atp",serve:63,ret:87,fh:70,bh:66,net:68,con:63,clutch:54,stam:71},
+  {n:"Mardy Fish",a:"Serve specialist",c:"USA",t:"atp",serve:90,ret:72,fh:77,bh:71,net:63,con:72,clutch:92,stam:70},
+  {n:"Marin Cilic",a:"Forehand + Consistency",c:"CRO",t:"atp",serve:78,ret:73,fh:86,bh:78,net:64,con:86,clutch:75,stam:85},
+  {n:"Mario Ancic",a:"Serve specialist",c:"CRO",t:"atp",serve:86,ret:66,fh:72,bh:67,net:60,con:72,clutch:80,stam:87},
+  {n:"Michael Llodra",a:"Serve specialist",c:"FRA",t:"atp",serve:85,ret:76,fh:58,bh:55,net:69,con:53,clutch:58,stam:47},
+  {n:"Mikhail Youzhny",a:"Return + Net",c:"RUS",t:"atp",serve:46,ret:83,fh:62,bh:74,net:76,con:65,clutch:56,stam:66},
+  {n:"Milos Raonic",a:"Serve + Forehand",c:"CAN",t:"atp",serve:94,ret:46,fh:87,bh:69,net:78,con:80,clutch:73,stam:78},
+  {n:"Nicolas Mahut",a:"Net specialist",c:"FRA",t:"atp",serve:75,ret:65,fh:73,bh:66,net:96,con:64,clutch:56,stam:60},
+  {n:"Novak Djokovic",a:"Forehand + Return",c:"SRB",t:"atp",serve:72,ret:95,fh:98,bh:87,net:79,con:94,clutch:90,stam:95},
+  {n:"Philipp Kohlschreiber",a:"Serve + Backhand",c:"GER",t:"atp",serve:74,ret:63,fh:67,bh:68,net:67,con:64,clutch:84,stam:58},
+  {n:"Radek Stepanek",a:"Return specialist",c:"CZE",t:"atp",serve:56,ret:80,fh:60,bh:61,net:62,con:56,clutch:60,stam:61},
+  {n:"Rafael Nadal",a:"Forehand + Consistency",c:"ESP",t:"atp",serve:67,ret:84,fh:97,bh:85,net:79,con:93,clutch:90,stam:91},
+  {n:"Rainer Schuettler",a:"Return specialist",c:"GER",t:"atp",serve:48,ret:77,fh:53,bh:63,net:65,con:57,clutch:44,stam:62},
+  {n:"Richard Gasquet",a:"Return + Backhand",c:"FRA",t:"atp",serve:64,ret:85,fh:73,bh:82,net:71,con:73,clutch:49,stam:64},
+  {n:"Roberto Bautista Agut",a:"Return specialist",c:"ESP",t:"atp",serve:44,ret:91,fh:55,bh:55,net:73,con:64,clutch:92,stam:74},
+  {n:"Robin Soderling",a:"Serve + Consistency",c:"SWE",t:"atp",serve:77,ret:63,fh:67,bh:65,net:56,con:71,clutch:67,stam:80},
+  {n:"Roger Federer",a:"Forehand + Backhand",c:"SUI",t:"atp",serve:87,ret:92,fh:98,bh:96,net:86,con:95,clutch:90,stam:85},
+  {n:"Sam Querrey",a:"Serve specialist",c:"USA",t:"atp",serve:82,ret:51,fh:71,bh:60,net:55,con:65,clutch:61,stam:62},
+  {n:"Stanislas Wawrinka",a:"Serve + Forehand",c:"SUI",t:"atp",serve:72,ret:59,fh:72,bh:64,net:70,con:65,clutch:45,stam:56},
+  {n:"Steve Johnson",a:"Net + Return",c:"USA",t:"atp",serve:64,ret:65,fh:50,bh:45,net:71,con:49,clutch:63,stam:55},
+  {n:"Tomas Berdych",a:"Forehand + Consistency",c:"CZE",t:"atp",serve:82,ret:72,fh:88,bh:75,net:63,con:85,clutch:72,stam:91},
+  {n:"Tommy Haas",a:"Backhand + Consistency",c:"GER",t:"atp",serve:68,ret:54,fh:79,bh:85,net:59,con:82,clutch:69,stam:71},
+  {n:"Agnieszka Radwanska",a:"Forehand + Serve",c:"POL",t:"wta",serve:84,ret:84,fh:85,bh:76,net:66,con:83,clutch:57,stam:77},
+  {n:"Ai Sugiyama",a:"All-court",c:"JPN",t:"wta",serve:53,ret:53,fh:59,bh:56,net:56,con:51,clutch:51,stam:48},
+  {n:"Amelie Mauresmo",a:"Backhand + Consistency",c:"FRA",t:"wta",serve:81,ret:81,fh:80,bh:84,net:67,con:83,clutch:58,stam:81},
+  {n:"Ana Ivanovic",a:"Forehand specialist",c:"SRB",t:"wta",serve:88,ret:88,fh:96,bh:80,net:64,con:85,clutch:87,stam:79},
+  {n:"Anastasia Myskina",a:"Consistency specialist",c:"RUS",t:"wta",serve:66,ret:66,fh:62,bh:60,net:66,con:74,clutch:53,stam:51},
+  {n:"Andrea Petkovic",a:"Net + Serve",c:"GER",t:"wta",serve:53,ret:53,fh:49,bh:47,net:60,con:53,clutch:55,stam:46},
+  {n:"Angelique Kerber",a:"Serve + Return",c:"GER",t:"wta",serve:79,ret:79,fh:77,bh:69,net:53,con:77,clutch:75,stam:71},
+  {n:"Anna Chakvetadze",a:"Net specialist",c:"RUS",t:"wta",serve:67,ret:67,fh:69,bh:69,net:83,con:65,clutch:62,stam:58},
+  {n:"Barbora Zahlavova Strycova",a:"Net specialist",c:"CZE",t:"wta",serve:49,ret:49,fh:49,bh:44,net:64,con:47,clutch:83,stam:85},
+  {n:"Carla Suarez Navarro",a:"Net specialist",c:"ESP",t:"wta",serve:52,ret:52,fh:47,bh:50,net:71,con:51,clutch:68,stam:75},
+  {n:"Caroline Wozniacki",a:"Serve + Return",c:"DEN",t:"wta",serve:85,ret:85,fh:78,bh:81,net:65,con:85,clutch:50,stam:52},
+  {n:"Daniela Hantuchova",a:"All-court",c:"SVK",t:"wta",serve:77,ret:77,fh:81,bh:76,net:82,con:74,clutch:84,stam:66},
+  {n:"Dinara Safina",a:"All-court",c:"RUS",t:"wta",serve:84,ret:84,fh:81,bh:79,net:77,con:84,clutch:76,stam:81},
+  {n:"Dominika Cibulkova",a:"Net + Serve",c:"SVK",t:"wta",serve:60,ret:60,fh:55,bh:53,net:62,con:60,clutch:85,stam:83},
+  {n:"Ekaterina Makarova",a:"All-court",c:"RUS",t:"wta",serve:68,ret:68,fh:68,bh:63,net:69,con:67,clutch:64,stam:52},
+  {n:"Elena Dementieva",a:"Forehand + Consistency",c:"RUS",t:"wta",serve:76,ret:76,fh:79,bh:66,net:67,con:78,clutch:60,stam:66},
+  {n:"Elena Vesnina",a:"All-court",c:"RUS",t:"wta",serve:52,ret:52,fh:54,bh:54,net:57,con:51,clutch:68,stam:72},
+  {n:"Eugenie Bouchard",a:"Consistency + Net",c:"CAN",t:"wta",serve:59,ret:59,fh:53,bh:48,net:60,con:63,clutch:66,stam:60},
+  {n:"Flavia Pennetta",a:"Net specialist",c:"ITA",t:"wta",serve:53,ret:53,fh:54,bh:51,net:87,con:52,clutch:60,stam:59},
+  {n:"Francesca Schiavone",a:"Backhand + Forehand",c:"ITA",t:"wta",serve:68,ret:68,fh:73,bh:75,net:65,con:63,clutch:77,stam:64},
+  {n:"Jelena Jankovic",a:"Serve + Return",c:"SRB",t:"wta",serve:84,ret:84,fh:77,bh:81,net:62,con:80,clutch:81,stam:61},
+  {n:"Jie Zheng",a:"Net specialist",c:"CHN",t:"wta",serve:48,ret:48,fh:54,bh:49,net:82,con:50,clutch:60,stam:65},
+  {n:"Justine Henin",a:"Consistency + Forehand",c:"BEL",t:"wta",serve:91,ret:91,fh:92,bh:92,net:81,con:93,clutch:76,stam:77},
+  {n:"Kim Clijsters",a:"Serve + Return",c:"BEL",t:"wta",serve:87,ret:87,fh:81,bh:77,net:72,con:87,clutch:49,stam:63},
+  {n:"Kirsten Flipkens",a:"All-court",c:"BEL",t:"wta",serve:60,ret:60,fh:67,bh:60,net:65,con:61,clutch:60,stam:63},
+  {n:"Madison Keys",a:"Consistency specialist",c:"USA",t:"wta",serve:58,ret:58,fh:56,bh:46,net:57,con:66,clutch:81,stam:66},
+  {n:"Maria Kirilenko",a:"Net specialist",c:"RUS",t:"wta",serve:54,ret:54,fh:57,bh:54,net:84,con:51,clutch:61,stam:58},
+  {n:"Maria Sharapova",a:"Serve + Return",c:"RUS",t:"wta",serve:92,ret:92,fh:85,bh:80,net:75,con:92,clutch:66,stam:74},
+  {n:"Marion Bartoli",a:"Forehand + Consistency",c:"FRA",t:"wta",serve:81,ret:81,fh:84,bh:79,net:59,con:82,clutch:87,stam:90},
+  {n:"Melanie Oudin",a:"Net specialist",c:"USA",t:"wta",serve:48,ret:48,fh:48,bh:43,net:64,con:50,clutch:66,stam:72},
+  {n:"Michaella Krajicek",a:"Net + Forehand",c:"NED",t:"wta",serve:48,ret:48,fh:53,bh:51,net:60,con:47,clutch:59,stam:73},
+  {n:"Na Li",a:"Serve + Return",c:"CHN",t:"wta",serve:81,ret:81,fh:80,bh:78,net:55,con:80,clutch:70,stam:76},
+  {n:"Nadia Petrova",a:"All-court",c:"RUS",t:"wta",serve:81,ret:81,fh:80,bh:76,net:74,con:81,clutch:68,stam:71},
+  {n:"Nicole Vaidisova",a:"Net + Forehand",c:"CZE",t:"wta",serve:66,ret:66,fh:73,bh:67,net:78,con:69,clutch:73,stam:61},
+  {n:"Patty Schnyder",a:"Net specialist",c:"SUI",t:"wta",serve:54,ret:54,fh:60,bh:53,net:76,con:51,clutch:72,stam:64},
+  {n:"Petra Kvitova",a:"Consistency + Serve",c:"CZE",t:"wta",serve:85,ret:85,fh:78,bh:74,net:76,con:86,clutch:87,stam:95},
+  {n:"Roberta Vinci",a:"Net + Backhand",c:"ITA",t:"wta",serve:61,ret:61,fh:69,bh:70,net:71,con:60,clutch:56,stam:52},
+  {n:"Sabine Lisicki",a:"Net + Forehand",c:"GER",t:"wta",serve:73,ret:73,fh:77,bh:65,net:83,con:76,clutch:96,stam:93},
+  {n:"Samantha Stosur",a:"All-court",c:"AUS",t:"wta",serve:66,ret:66,fh:61,bh:60,net:68,con:62,clutch:51,stam:47},
+  {n:"Serena Williams",a:"Serve + Return",c:"USA",t:"wta",serve:94,ret:94,fh:89,bh:81,net:76,con:94,clutch:77,stam:85},
+  {n:"Simona Halep",a:"All-court",c:"ROU",t:"wta",serve:69,ret:69,fh:69,bh:64,net:72,con:68,clutch:50,stam:63},
+  {n:"Sloane Stephens",a:"Net + Consistency",c:"USA",t:"wta",serve:55,ret:55,fh:49,bh:45,net:59,con:59,clutch:84,stam:81},
+  {n:"Svetlana Kuznetsova",a:"Net + Serve",c:"RUS",t:"wta",serve:68,ret:68,fh:67,bh:60,net:75,con:67,clutch:79,stam:67},
+  {n:"Tamarine Tanasugarn",a:"Net + Consistency",c:"THA",t:"wta",serve:63,ret:63,fh:63,bh:59,net:68,con:64,clutch:72,stam:82},
+  {n:"Tamira Paszek",a:"Forehand + Backhand",c:"AUT",t:"wta",serve:59,ret:59,fh:64,bh:62,net:41,con:57,clutch:85,stam:82},
+  {n:"Tsvetana Pironkova",a:"Net specialist",c:"BUL",t:"wta",serve:52,ret:52,fh:52,bh:53,net:66,con:53,clutch:68,stam:55},
+  {n:"Venus Williams",a:"Serve + Return",c:"USA",t:"wta",serve:93,ret:93,fh:85,bh:81,net:76,con:93,clutch:64,stam:84},
+  {n:"Vera Zvonareva",a:"Net + Forehand",c:"RUS",t:"wta",serve:77,ret:77,fh:79,bh:73,net:85,con:76,clutch:80,stam:88},
+  {n:"Victoria Azarenka",a:"All-court",c:"BLR",t:"wta",serve:90,ret:90,fh:87,bh:87,net:82,con:87,clutch:66,stam:59},
+  {n:"Yanina Wickmayer",a:"Forehand + Backhand",c:"BEL",t:"wta",serve:61,ret:61,fh:68,bh:64,net:53,con:61,clutch:68,stam:57}
+];
+const ATTRS=[{k:'serve',n:'Serve'},{k:'ret',n:'Return'},{k:'fh',n:'Forehand'},{k:'bh',n:'Backhand'},{k:'net',n:'Net'},{k:'con',n:'Consist.'}];
+
+// ===== config =====
+const GAME_VERSION='3.2.0';
+const RATINGS_VERSION='wimbledon-ratings-pipeline-v1';
+const DAILY_RESPINS=3;      // manual re-rolls you may spend before committing; picks auto-advance the reels for free
+const PENALTY_BASE=55;      // defensive default for an unfilled slot (normal play always fills all six)
+const EPOCH=Date.UTC(2025,5,23); // Wimbledon 2025 fortnight (thematic daily numbering)
+const SHARE_URL='';         // optional: set to your hosted URL to append to share cards
+const SUPA={ url:'', anon:'' }; // fill both to enable Supabase analytics (off by default → fully standalone)
+
+// ===== seeded PRNG (deterministic dailies: same spins + draw + luck for everyone, every day) =====
+function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return function(){h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^=h>>>16)>>>0;};}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function makeRng(seedStr){const s=xmur3(seedStr);return mulberry32(s());}
+const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+
+// ===== THE MODEL (grass profile) =====
+// B = universal serve/hold advantage on grass (applies to whoever serves). H = small "protagonist" edge
+// for the player you built (keeps a mass-casual title chance ~20% without breaking who-beats-whom realism).
+const W={ B:1.40, H:0.60, S:12, SC:42, SCdec:80, form:16,
+  hold:{serve:.50,fh:.18,bh:.12,net:.12,con:.08},
+  ret :{ret:.45,con:.18,fh:.15,bh:.15,net:.07} };
+const FAT={ base:1.0 }; // per-round fatigue subtracted from hold/return, resisted by stamina
+const logistic=x=>1/(1+Math.exp(-x));
+function levers(a){
+  return {
+    hold: W.hold.serve*a.serve+W.hold.fh*a.fh+W.hold.bh*a.bh+W.hold.net*a.net+W.hold.con*a.con,
+    ret:  W.ret.ret*a.ret+W.ret.con*a.con+W.ret.fh*a.fh+W.ret.bh*a.bh+W.ret.net*a.net
+  };
+}
+const overall=a=>{const l=levers(a); return (l.hold+l.ret)/2 + (((a.clutch??74)-74)*0.06) + (((a.stam??76)-76)*0.04);};
+function roundFatigue(stam, roundIndex){
+  const resist=Math.max(0.25, 1-((stam-60)/40)*0.6); // stamina 100 ≈ 0.4× fatigue, stamina 60 ≈ 1×
+  return Math.max(0, FAT.base*roundIndex*resist);
+}
+function probs(you,opp,opts){
+  opts=opts||{}; const fat=opts.fatigue||0;
+  const Ly=levers(you),Lo=levers(opp);
+  const yHold=Ly.hold-fat+(opts.formY||0), yRet=Ly.ret-fat+(opts.formY||0); // your form for this match
+  const oHold=Lo.hold+(opts.formO||0), oRet=Lo.ret+(opts.formO||0);          // opponent's form for this match
+  const cd=((you.clutch??74)-(opp.clutch??74));      // clutch differential
+  const dec=opts.deciding? cd/W.SCdec : 0;           // nerve swings the deciding set
+  return {
+    pHold: logistic((yHold-oRet)/W.S + W.B + W.H + dec),          // you serving (grass bias + protagonist edge)
+    pBreak: 1 - logistic((oHold-yRet)/W.S + W.B - dec),           // opp serving: you break = they fail to hold
+    pTb:   logistic(((yHold+yRet)-(oHold+oRet))/(2*W.S) + cd/W.SC + W.H*0.5) // nerve decides tiebreaks
+  };
+}
+function simSet(p,rng){let gy=0,go=0,s=rng()<.5?'y':'o';
+  while(true){const w=s==='y'?rng()<p.pHold:rng()<p.pBreak; w?gy++:go++;
+    if(gy===6&&go===6){rng()<p.pTb?gy++:go++;break;}
+    if((gy>=6||go>=6)&&Math.abs(gy-go)>=2)break; s=s==='y'?'o':'y';}
+  return{win:gy>go,gy,go};}
+function simMatch(you,opp,bo,rng,fatigue){const need=(bo+1)/2;let sy=0,so=0,sets=[];
+  const formY=(rng()-0.5)*W.form, formO=(rng()-0.5)*W.form; // per-match form: the upset engine (seeded → daily-fair)
+  while(sy<need&&so<need){
+    const deciding=(sy===need-1&&so===need-1);
+    const p=probs(you,opp,{fatigue,deciding,formY,formO});
+    const s=simSet(p,rng);sets.push([s.gy,s.go]);s.win?sy++:so++;}
+  return{win:sy>so,sets};}
+function winProb(you,opp,bo,N,rng,fatigue){let w=0;for(let i=0;i<N;i++)if(simMatch(you,opp,bo,rng,fatigue).win)w++;return w/N;}
+
+// ===== STATE =====
+// Six reels, one per category. Pick ONE player per spin: locking it auto-re-deals the other unlocked
+// reels for free. You also get DAILY_RESPINS manual re-rolls for when you don't fancy the whole hand.
+// Locking the sixth (last) shot ends the draft and runs the tournament automatically.
+const build={serve:null,ret:null,fh:null,bh:null,net:null,con:null};
+const source={};
+// reels[i] = { key, player|null, locked }  — bound 1:1 to ATTRS[i]
+let reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
+let pickedSources=[]; // the locked reels' players → drive inherited clutch/stamina
+let mode='free', currentSeed='', dealCount=0, respinsLeft=DAILY_RESPINS;
+
+function lockedReels(){ return reels.filter(r=>r.locked); }
+function allLocked(){ return reels.every(r=>r.locked); }
+function draftDone(){ return allLocked(); }   // the draft ends only when all six shots are locked
+
+function inherited(){
+  const src=lockedReels().map(r=>r.player).filter(Boolean);
+  if(!src.length) return {clutch:70,stam:70};
+  return {clutch:avg(src.map(p=>p.clutch)), stam:avg(src.map(p=>p.stam))};
+}
+function championFrom(buildObj,srcPlayers){
+  const inh=srcPlayers.length?{clutch:avg(srcPlayers.map(p=>p.clutch)),stam:avg(srcPlayers.map(p=>p.stam))}:{clutch:70,stam:70};
+  const a={clutch:inh.clutch,stam:inh.stam};
+  for(const at of ATTRS) a[at.k]=(buildObj[at.k]!=null)?buildObj[at.k]:PENALTY_BASE;
+  return a;
+}
+const championAttrs=()=>championFrom(build,lockedReels().map(r=>r.player).filter(Boolean));
+const meter=v=>{const f=Math.max(0,Math.min(5,Math.round(v/20)));return '●'.repeat(f)+'○'.repeat(5-f);};
+const $=id=>document.getElementById(id);
+
+// ===== dates / daily (daily mode disabled for now — helpers kept for easy re-enable) =====
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dailyNumber(){const d=new Date();const t=Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());return Math.floor((t-EPOCH)/86400000)+1;}
+function dailyKey(){return 'bac_daily_'+todayStr();}
+function savedDaily(){try{return JSON.parse(localStorage.getItem(dailyKey()));}catch(e){return null;}}
+
+// Deal distinct players onto every UNLOCKED reel for a given spin. Seeded per (seed, spin, reel)
+// so dailies are identical + shareable; locked reels keep their player.
+function dealReels(spinNo){
+  const taken=new Set(lockedReels().map(r=>r.player&&r.player.n));
+  reels.forEach((r,i)=>{
+    if(r.locked) return;
+    const rng=mode==='daily'? makeRng(currentSeed+'|spin'+spinNo+'|reel'+i) : Math.random;
+    let p, tries=0;
+    do{ p=ROSTER[Math.floor(rng()*ROSTER.length)]; tries++; }while(taken.has(p.n)&&tries<80);
+    taken.add(p.n); r.player=p;
+  });
+}
+
+// ===== licence-clean player token (Route A: silhouette + IOC country + initials) =====
+// No photographs, no likeness, no logos — a generated monogram badge. Also the fallback for missing data.
+function initials(name){
+  const parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return '?';
+  const first=parts[0][0]||''; const last=parts.length>1?parts[parts.length-1][0]:'';
+  return (first+last).toUpperCase();
+}
+function tourHue(t){ return t==='wta'? 285 : 205; } // subtle tour tint (ATP blue-ish / WTA violet-ish)
+function tokenSVG(p){
+  const ini=initials(p&&p.n), cc=(p&&p.c)||'', h=tourHue(p&&p.t);
+  // deterministic backdrop tint from name so each token is visually distinct but stable
+  let seed=0; const nm=(p&&p.n)||''; for(let i=0;i<nm.length;i++) seed=(seed*31+nm.charCodeAt(i))>>>0;
+  const light=22+(seed%14);
+  return `<svg viewBox="0 0 64 64" role="img" aria-label="${(p&&p.n)||'Empty'} token">
+    <defs><linearGradient id="g${seed%997}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="hsl(${h} 32% ${light+10}%)"/>
+      <stop offset="1" stop-color="hsl(${h} 30% ${light}%)"/>
+    </linearGradient></defs>
+    <rect width="64" height="64" fill="url(#g${seed%997})"/>
+    <!-- silhouette -->
+    <circle cx="32" cy="25" r="10" fill="rgba(255,255,255,.16)"/>
+    <path d="M14 60 q0-16 18-16 t18 16" fill="rgba(255,255,255,.16)"/>
+    <text x="32" y="30" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="600"
+      font-size="17" fill="#f4f1ea">${ini}</text>
+    ${cc?`<text x="32" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="600"
+      font-size="10" letter-spacing="1" fill="rgba(244,241,234,.85)">${cc}</text>`:''}
+  </svg>`;
+}
+
+// ===== rendering =====
+function renderReels(justKey, spinningSet){
+  const host=$('reels'); host.innerHTML='';
+  reels.forEach((r,i)=>{
+    const at=ATTRS[i], p=r.player;
+    const d=document.createElement('div');
+    const isSpinning=spinningSet&&spinningSet.has(i);
+    const canLock = p && !r.locked && !allLocked();
+    d.className='reel'+(r.locked?' locked':'')+(isSpinning?' spinning':'')+(justKey===at.k?' just':'')+(canLock?' pickable':'');
+    const val = p? p[at.k] : '—';
+    let btnLabel, btnDisabled;
+    if(r.locked){ btnLabel='✓ '+at.n+' locked'; btnDisabled=true; }
+    else if(!p){ btnLabel='Spin to deal'; btnDisabled=true; }
+    else { btnLabel='Pick '+at.n; btnDisabled=false; }
+    d.innerHTML=`<div class="cat">${at.n}</div>
+      <div class="tok">${tokenSVG(p)}</div>
+      <div class="pnm">${p? p.n : '—'}</div>
+      <div class="val">${val}</div>
+      <div class="src">${r.locked? ('from '+p.n) : (p? p.a : '')}</div>
+      <button class="lockbtn" ${btnDisabled?'disabled':''}>${btnLabel}</button>`;
+    if(canLock){ d.addEventListener('click',()=>lockReel(i)); }
+    host.appendChild(d);
+  });
+  refreshControls();
+}
+function refreshControls(){
+  const lockedCount=lockedReels().length;
+  const noRespins=respinsLeft<=0;
+  $('spinBtn').disabled = noRespins || allLocked();
+  $('spinBtn').textContent = noRespins? 'No respins left' : ('🎾 Respin · '+respinsLeft+' left');
+  $('spinsLeft').innerHTML=`<b>${respinsLeft}</b> respins left · <b>${lockedCount}</b>/6 locked`;
+  renderXfac();
+}
+function renderXfac(){
+  const host=$('xfac');
+  const src=lockedReels().map(r=>r.player).filter(Boolean);
+  if(!src.length){host.style.display='none';host.innerHTML='';return;}
+  const inh=inherited();
+  host.style.display='flex';
+  host.innerHTML=`<div>Composure <span class="mtr">${meter(inh.clutch)}</span> ${inh.clutch.toFixed(0)}</div>
+    <div>Stamina <span class="mtr">${meter(inh.stam)}</span> ${inh.stam.toFixed(0)}</div>`;
+}
+function respin(){
+  if(respinsLeft<=0 || allLocked()) return;
+  respinsLeft--; dealCount++;         // spend a manual re-roll; re-deal every unlocked reel
+  const spinning=new Set(reels.map((r,i)=>r.locked?null:i).filter(i=>i!==null));
+  dealReels(dealCount);
+  track('respin',{respinsLeft, dealCount, dealt:reels.map(r=>r.player?{cat:r.key,player:r.player.n,val:r.player[r.key],locked:r.locked}:null)});
+  renderReels(null, spinning);
+}
+function lockReel(i){
+  const r=reels[i]; if(r.locked||!r.player||allLocked()) return;
+  r.locked=true;
+  build[r.key]=r.player[r.key]; source[r.key]=r.player.n;
+  pickedSources=lockedReels().map(x=>x.player);
+  track('lock',{attr:r.key,value:r.player[r.key],source:r.player.n});
+  if(allLocked()){                    // last shot picked → freeze the board and run the draw automatically
+    renderReels(r.key);
+    finishDraft();
+    return;
+  }
+  dealCount++;                        // a pick auto-advances: re-deal the remaining unlocked reels (free)
+  const spinning=new Set(reels.map((rr,idx)=>rr.locked?null:idx).filter(idx=>idx!==null));
+  dealReels(dealCount);
+  renderReels(r.key, spinning);
+}
+function finishDraft(){
+  const champ=championAttrs(), l=levers(champ);
+  $('ovr').textContent=overall(champ).toFixed(0);
+  $('hold').textContent=l.hold.toFixed(1);
+  $('ret').textContent=l.ret.toFixed(1);
+  $('comp').textContent=champ.clutch.toFixed(0);
+  $('stam').textContent=champ.stam.toFixed(0);
+  $('enterPanel').style.display='block';
+  $('enterBtn').style.display='none';   // auto-sim — the last pick runs the draw for you
+  enterDraw();
+  $('enterPanel').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+
+// ============ THE RUN: seeded gauntlet, ascending difficulty, elite Bo5 final ============
+const RD=['R1','R2','R3','R16','QF','SF','F'];
+const RD_NAME={R1:'first round',R2:'second round',R3:'third round',R16:'fourth round',QF:'quarter-finals',SF:'semi-finals',F:'final'};
+const RD_PTS=[10,15,20,30,45,65,120];
+function drawOpponents(rng){
+  // round-tiered draw: like real seeding, the path ramps from beatable early to elite in the final
+  const sorted=[...ROSTER].sort((a,b)=>overall(a)-overall(b)); // weakest → strongest
+  const n=sorted.length;
+  const tiers=[[0,0.32],[0.06,0.42],[0.20,0.54],[0.36,0.68],[0.54,0.82],[0.74,0.94],[0.88,1.0]]; // R1…F
+  const used=new Set(), picks=[];
+  for(const [lo,hi] of tiers){
+    const loI=Math.floor(lo*n), hiI=Math.max(loI+1,Math.floor(hi*n));
+    let tries=0,p;
+    do{ p=sorted[Math.min(n-1, loI+Math.floor(rng()*(hiI-loI)))]; tries++; }while(used.has(p)&&tries<60);
+    used.add(p); picks.push(p);
+  }
+  return picks;
+}
+function playTournament(champ){
+  const drawRng = mode==='daily'? makeRng(currentSeed+'|draw') : Math.random;
+  const opps=drawOpponents(drawRng);
+  const playRng = mode==='daily'? makeRng(currentSeed+'|play') : Math.random;
+  let score=0,titleOdds=1,alive=true,reached='',rounds=[];
+  opps.forEach((opp,i)=>{
+    const bo=(i===6)?5:3;                 // Bo5 final for drama + men's realism; Bo3 earlier for pace
+    const fat=roundFatigue(champ.stam,i); // you accumulate fatigue across the run; opponents are fresh
+    if(!alive){rounds.push({opp,played:false,bo,fat});return;}
+    const oddsRng = mode==='daily'? makeRng(currentSeed+'|odds|'+i) : Math.random;
+    const wp=winProb(champ,opp,bo,1000,oddsRng,fat); titleOdds*=wp;
+    const m=simMatch(champ,opp,bo,playRng,fat);
+    rounds.push({opp,played:true,win:m.win,sets:m.sets,wp,bo,fat});
+    reached=RD[i];
+    if(m.win) score+=RD_PTS[i]; else alive=false;
+  });
+  return {opps,rounds,won:alive,reached,score,titleOdds};
+}
+function renderRun(host,play){
+  host.innerHTML='';
+  play.rounds.forEach((r,i)=>{
+    const ov=overall(r.opp);
+    const div=document.createElement('div');
+    if(!r.played){
+      div.className='round dnp';
+      div.innerHTML=`<div class="rd">${RD[i]}</div><div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div><div class="odds">—</div><div class="score">—</div>`;
+      host.appendChild(div);return;
+    }
+    const sc=r.sets.map(s=>s[0]+'-'+s[1]).join(' ');
+    div.className='round '+(r.win?'win':'loss');
+    div.innerHTML=`<div class="rd">${RD[i]}${r.bo===5?'<span class="bo5">Bo5</span>':''}</div>
+      <div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div>
+      <div class="odds">${(r.wp*100).toFixed(0)}%</div>
+      <div class="score ${r.win?'w':'l'}">${sc}</div>`;
+    host.appendChild(div);
+  });
+  const v=document.createElement('div');
+  if(play.won){
+    v.innerHTML=`<div class="verdict title">🏆 WIMBLEDON CHAMPION</div><div class="verdict-sub">Score ${play.score} · pre-tournament title odds ${(play.titleOdds*100).toFixed(1)}%</div>`;
+  }else{
+    v.innerHTML=`<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div><div class="verdict-sub">Score ${play.score} · title odds going in ${(play.titleOdds*100).toFixed(1)}%</div>`;
+  }
+  host.appendChild(v);
+}
+function archetypeName(a){
+  const entries=[['Cannon',a.serve],['Wall',a.ret],['Hammer',a.fh],['Blade',a.bh],['Net Rusher',a.net],['Metronome',a.con]];
+  entries.sort((x,y)=>y[1]-x[1]);
+  const vals=entries.map(e=>e[1]); const spread=Math.max(...vals)-Math.min(...vals);
+  let name = spread<9? 'All-Courter' : entries[0][0];
+  const suffix = a.clutch>=85?' · Ice' : a.clutch<=68?' · Frontrunner' : '';
+  return 'The '+name+suffix;
+}
+function shareText(res){
+  const head = mode==='daily'? `Build-a-Champion · Wimbledon — Daily #${dailyNumber()}` : `Build-a-Champion · Wimbledon`;
+  const grid = res.rounds.map(r=> r==='win'?'🟩': r==='loss'?'🟥':'⬛').join('');
+  const out = res.won? '🏆 CHAMPION' : `Out · ${RD_NAME[res.reached]}`;
+  const lines=[head, `${out} — Score ${res.score}`, grid, `${res.archetype} · Composure ${meter(res.clutch)} Stamina ${meter(res.stam)}`];
+  if(SHARE_URL) lines.push(SHARE_URL);
+  return lines.join('\n');
+}
+function renderShare(host,res){
+  const txt=shareText(res);
+  const wrap=document.createElement('div'); wrap.className='share';
+  wrap.innerHTML=`<pre></pre><div class="row"><button class="copybtn" id="copyBtn">Copy result</button></div>`;
+  wrap.querySelector('pre').textContent=txt;
+  host.appendChild(wrap);
+  $('copyBtn').addEventListener('click',async()=>{
+    try{ if(navigator.share){ await navigator.share({text:txt}); } else { await navigator.clipboard.writeText(txt); }
+      const b=$('copyBtn'); b.textContent='Copied ✓'; b.classList.add('done');
+    }catch(e){ try{await navigator.clipboard.writeText(txt);$('copyBtn').textContent='Copied ✓';$('copyBtn').classList.add('done');}catch(_){} }
+  });
+}
+function updateStreak(){
+  const today=todayStr();
+  let s=JSON.parse(localStorage.getItem('bac_streak')||'null');
+  if(!s){ s={count:1,last:today}; }
+  else if(s.last===today){ /* already counted today */ }
+  else { const diff=Math.round((new Date(today)-new Date(s.last))/86400000); s.count = diff===1? s.count+1 : 1; s.last=today; }
+  localStorage.setItem('bac_streak',JSON.stringify(s));
+  return s;
+}
+function enterDraw(){
+  const champ=championAttrs();
+  const play=playTournament(champ);
+  const host=$('run'); renderRun(host,play);
+  const res={ won:play.won, reached:play.reached, score:play.score,
+    rounds: play.rounds.map(r=>r.played?(r.win?'win':'loss'):'dnp'),
+    archetype: archetypeName(champ), clutch:champ.clutch, stam:champ.stam, titleOdds:play.titleOdds };
+  renderShare(host,res);
+  track('result',{mode,score:res.score,won:res.won,reached:res.reached,build:{...build},sources:pickedSources.map(p=>p.n),clutch:champ.clutch,stam:champ.stam,titleOdds:res.titleOdds});
+  saveResult(res,champ);
+}
+
+// ============ analytics (Supabase) — off until BOTH configured AND consented ============
+let supa=null;
+function sessionId(){let id=localStorage.getItem('bac_sid');if(!id){id=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2));localStorage.setItem('bac_sid',id);}return id;}
+function analyticsReady(){return SUPA.url&&SUPA.anon&&localStorage.getItem('bac_consent')==='yes';}
+function initAnalytics(){
+  if(!analyticsReady()) return;
+  const boot=()=>{ if(window.supabase){ supa=window.supabase.createClient(SUPA.url,SUPA.anon); } };
+  if(window.supabase){ boot(); }
+  else { const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'; s.onload=boot; document.head.appendChild(s); }
+}
+function track(event_type,payload){ if(!supa) return; supa.from('events').insert({session_id:sessionId(),event_type,payload,game_version:GAME_VERSION,ratings_version:RATINGS_VERSION,daily_seed:currentSeed,mode}).then(()=>{},()=>{}); }
+function saveResult(res,champ){ if(!supa) return; supa.from('results').insert({session_id:sessionId(),daily_seed:currentSeed,mode,score:res.score,rounds_reached:res.reached,won:res.won,build:{...build},archetype:res.archetype,clutch:champ.clutch,stamina:champ.stam,title_odds:res.titleOdds,game_version:GAME_VERSION,ratings_version:RATINGS_VERSION}).then(()=>{},()=>{}); }
+function renderConsent(){
+  if(!SUPA.url||!SUPA.anon) return; // nothing to consent to when analytics isn't configured
+  const c=$('consent'); c.style.display='flex';
+  const on=localStorage.getItem('bac_consent')==='yes';
+  c.innerHTML=`<span>${on?'Anonymous gameplay analytics: on.':'Help improve the game? Anonymous, no personal data.'}</span>
+    <button class="ghost" id="consentBtn">${on?'Turn off':'Allow analytics'}</button>`;
+  $('consentBtn').addEventListener('click',()=>{ localStorage.setItem('bac_consent', on?'no':'yes'); renderConsent(); if(!on) initAnalytics(); });
+}
+
+// ============ wiring + init ============
+$('spinBtn').addEventListener('click',respin);
+$('enterBtn').addEventListener('click',enterDraw);
+$('playAgainBtn').addEventListener('click',()=>{ startGame(); window.scrollTo({top:0,behavior:'smooth'}); });
+function startGame(){
+  for(const k in build) build[k]=null; for(const k in source) delete source[k];
+  reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
+  pickedSources=[]; dealCount=0; respinsLeft=DAILY_RESPINS;
+  $('run').innerHTML='';
+  $('enterPanel').style.display='none';
+  $('enterBtn').style.display=''; $('enterBtn').disabled=false;
+  const lev=document.querySelector('#enterPanel .levers'); if(lev) lev.style.display='';
+  currentSeed='free-'+Date.now()+'-'+Math.floor(Math.random()*1e9);
+  $('draftPanel').style.display='block';
+  dealReels(0);                        // first deal is free — reels start populated
+  renderReels();
+  track('game_start',{mode});
+}
+
+initAnalytics();
+renderConsent();
+startGame();
+</script>
+</body>
+</html>

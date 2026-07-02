@@ -1,0 +1,27 @@
+# Backhand-type prior (one- vs two-handed). Free structured data does not carry
+# this reliably, so it is a small curated editorial list. Matched by normalised
+# full name. Anyone not listed defaults to two-handed (the modern norm).
+# Used only as a gentle nudge on the (model-tier) backhand rating + recorded in
+# the explain output. Add/correct freely.
+name,backhand
+Roger Federer,one
+Stan Wawrinka,one
+Richard Gasquet,one
+Grigor Dimitrov,one
+Dominic Thiem,one
+Stefanos Tsitsipas,one
+Lorenzo Musetti,one
+Tommy Haas,one
+Tommy Robredo,one
+Nicolas Almagro,one
+Philipp Kohlschreiber,one
+Feliciano Lopez,one
+Gustavo Kuerten,one
+Tim Henman,one
+Mikhail Youzhny,one
+Fabio Fognini,one
+Justine Henin,one
+Amelie Mauresmo,one
+Francesca Schiavone,one
+Carla Suarez Navarro,one
+Roberta Vinci,one

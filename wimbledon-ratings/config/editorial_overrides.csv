@@ -1,0 +1,13 @@
+# Editorial overrides. Reviewers add one row per manual adjustment.
+# These REPLACE the computed rating for a (player_id, attribute) and are
+# recorded in the explainability output so every change is auditable.
+#
+# player_id : output slug, e.g. roger-federer
+# attribute : serve | return | forehand | backhand | net_volley | consistency
+# value     : integer 40-98
+# reviewer  : your name/initials
+# note      : short justification (required for audit)
+#
+# Example (delete or keep, blank rows are ignored):
+# roger-federer,net_volley,95,ed,"Best grass volleyer of the era; data thin pre-2006"
+player_id,attribute,value,reviewer,note

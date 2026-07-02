@@ -1,0 +1,15 @@
+# ---------------------------------------------------------------------------
+# How the top-50-per-tour "most notable of 2006-2025" field is chosen.
+# A composite notability score (each component percentile-ranked within tour,
+# then weighted) ranks every player who appeared in a Wimbledon main draw in
+# the window. The top N per tour are kept.
+# ---------------------------------------------------------------------------
+
+n_per_tour: 50
+require_wimbledon_appearance: true   # must have >=1 Wimbledon main-draw match 2006-2025
+
+notability:
+  peak_grass_elo: 0.40        # best grass Elo reached (in-house, facts)
+  best_wimbledon_round: 0.25  # furthest round reached at Wimbledon (title=8)
+  weeks_top10: 0.20           # weeks ranked inside the top 10 (career)
+  grass_titles: 0.15          # grass-court finals won in the window
