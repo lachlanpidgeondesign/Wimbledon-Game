@@ -4,112 +4,139 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Build-a-Champion — Wimbledon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+<!-- Design tokens: the single source of truth for colour, type, spacing & radius (see tokens.css). -->
+<link rel="stylesheet" href="tokens.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-  :root{
-    color-scheme:dark;
-    --bg:#0d0d10; --panel:#16161b; --panel2:#1d1d24; --line:#2b2b34;
-    --ink:#f4f1ea; --muted:#a8a298; --amber:#ffb33b; --amber-soft:#3a2c12;
-    --green:#5fd08a; --red:#ff6f6f; --blue:#7db8ff; --grass:#6fae5a;
-  }
+  :root{ color-scheme:dark; }
   *{box-sizing:border-box;}
-  body{margin:0; background:var(--bg); color:var(--ink); font-family:'Hanken Grotesk',system-ui,sans-serif;
-    line-height:1.5; padding:26px 20px 70px;}
+  body{margin:0; background:var(--canvas); color:var(--text); font-family:var(--font-body);
+    line-height:var(--leading-body); padding:var(--space-6) var(--space-4) 70px;}
   .wrap{max-width:780px; margin:0 auto;}
-  h1{font-family:'Fraunces',serif; font-weight:800; font-size:30px; margin:0; letter-spacing:-.01em;}
-  h1 .leaf{color:var(--grass);}
-  .sub{color:var(--muted); font-size:14px; margin:2px 0 22px;}
-  .mono{font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums;}
+  h1{font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-2xl); margin:0; letter-spacing:-.01em; line-height:var(--leading-heading);}
+  h1 .leaf{color:var(--green);}
+  .sub{color:var(--text-muted); font-size:var(--text-sm); margin:var(--space-1) 0 var(--space-6);}
+  .mono{font-variant-numeric:tabular-nums;}
 
   /* slot board */
-  .board{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px;}
+  .board{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3); margin-bottom:var(--space-4);}
   @media(max-width:560px){ .board{grid-template-columns:repeat(2,1fr);} }
-  .slot{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 13px; min-height:78px;}
-  .slot .nm{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em;}
-  .slot .v{font-family:'JetBrains Mono',monospace; font-size:30px; font-weight:600; line-height:1.1; margin-top:3px;}
-  .slot .src{font-size:11.5px; color:var(--amber); margin-top:1px; min-height:15px;}
+  .slot{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-3); min-height:78px;}
+  .slot .nm{font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em;}
+  .slot .v{font-variant-numeric:tabular-nums; font-size:var(--text-2xl); font-weight:var(--weight-medium); line-height:1.1; margin-top:var(--space-1);}
+  .slot .src{font-size:var(--text-xs); color:var(--green); margin-top:1px; min-height:15px;}
   .slot.empty{border-style:dashed; opacity:.6;}
-  .slot.empty .v{color:var(--muted); font-size:20px; padding-top:7px;}
-  .slot.just{border-color:var(--amber); box-shadow:0 0 0 1px var(--amber);}
+  .slot.empty .v{color:var(--text-muted); font-size:var(--text-lg); padding-top:7px;}
+  .slot.just{border-color:var(--green); box-shadow:0 0 0 1px var(--green);}
 
   /* six-reel draft board (player token per category) */
-  .reels{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px;}
+  .reels{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3); margin-bottom:var(--space-3);}
   @media(max-width:640px){ .reels{grid-template-columns:repeat(2,1fr);} }
-  .reel{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:11px; text-align:center;
-    display:flex; flex-direction:column; align-items:center; gap:7px; position:relative; min-height:196px;
+  .reel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-3); text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:var(--space-2); position:relative; min-height:196px;
     transition:transform .14s, border-color .14s, box-shadow .14s;}
-  .reel .cat{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; font-weight:600;}
-  .reel .tok{width:64px; height:64px; border-radius:50%; overflow:hidden; border:1px solid var(--line);
-    background:var(--panel2); display:block;}
-  .reel .pnm{font-size:12px; font-weight:600; line-height:1.15; min-height:28px; display:flex; align-items:center;}
-  .reel .val{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:600; line-height:1;}
-  .reel .lockbtn{font-size:11.5px; font-weight:700; padding:6px 12px; background:var(--amber); color:#0d0d10; border-radius:8px; width:100%;}
+  .reel .cat{font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; font-weight:var(--weight-medium);}
+  .reel .tok{width:64px; height:64px; border-radius:var(--radius-pill); overflow:hidden; border:1px solid var(--border);
+    background:var(--surface-raised); display:block;}
+  .reel .pnm{font-size:var(--text-xs); font-weight:var(--weight-medium); line-height:1.15; min-height:28px; display:flex; align-items:center;}
+  .reel .val{font-variant-numeric:tabular-nums; font-size:var(--text-xl); font-weight:var(--weight-medium); line-height:1;}
+  .reel .lockbtn{font-size:var(--text-xs); font-weight:var(--weight-medium); padding:var(--space-2) var(--space-3); background:var(--color-primary); color:var(--green-on); border-radius:var(--radius-sm); width:100%;}
   .reel .lockbtn:disabled{opacity:.4; cursor:default;}
   .reel.pickable{cursor:pointer;}
-  .reel.pickable:hover{border-color:var(--amber); transform:translateY(-2px); box-shadow:0 8px 20px -10px rgba(255,179,59,.55);}
-  .reel.pickable:hover .lockbtn{background:#ffc257;}
-  /* locked state: attribute chosen, reel frozen */
-  .reel.locked{border-color:#2f5a3f; background:linear-gradient(180deg,var(--panel),#14251b);}
-  .reel.locked .lockbtn{background:var(--panel2); color:var(--green); border:1px solid #2f5a3f;}
-  .reel.locked .src{font-size:11px; color:var(--green); font-weight:600;}
+  .reel.pickable:hover{border-color:var(--green); transform:translateY(-2px); box-shadow:0 8px 20px -10px color-mix(in srgb, var(--green) 45%, transparent);}
+  .reel.pickable:hover .lockbtn{background:var(--green-hover);}
+  /* locked state: attribute chosen, reel frozen (surface stays neutral — green signals the pick) */
+  .reel.locked{border-color:var(--green-deep); background:var(--surface);}
+  .reel.locked .lockbtn{background:var(--surface-raised); color:var(--green); border:1px solid var(--green-deep);}
+  .reel.locked .src{font-size:var(--text-xs); color:var(--green); font-weight:var(--weight-medium);}
   .reel .src{min-height:15px;}
-  .reel.spinning .tok{animation:reelblur .5s linear;}
-  .reel.spinning .val,.reel.spinning .pnm{animation:reelflick .5s steps(1) both;}
-  @keyframes reelblur{0%{filter:blur(2px);opacity:.6;transform:translateY(-4px);}100%{filter:none;opacity:1;transform:none;}}
-  @keyframes reelflick{0%{opacity:.35;}100%{opacity:1;}}
+  /* Wimbledon pedigree pill: purple tag for deep runs; gold for champions (champion state only) */
+  .reel .ped{font-size:var(--text-xs); font-weight:var(--weight-medium); padding:1px var(--space-2); border-radius:var(--radius-pill);
+    line-height:1.4; letter-spacing:.02em; white-space:nowrap; border:1px solid transparent;}
+  .reel .ped.run{background:var(--purple-deep); color:var(--purple-on);}
+  .reel .ped.champ{background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--gold); border-color:var(--gold);}
+  .reel .ped.none{visibility:hidden;}
+  /* spinning reels: legends roll past, then each drops into place and settles */
+  .reel.spinning{pointer-events:none;}
+  .reel.spinning .pnm,.reel.spinning .val{overflow:hidden;}
+  .reel.spinning .tok svg{animation:reeldrop .17s linear;}
+  .reel.spinning .pnm .roll,.reel.spinning .val .roll{display:inline-block; animation:reeldrop .17s linear;}
+  @keyframes reeldrop{0%{transform:translateY(-105%); opacity:.12; filter:blur(1.5px);}65%{opacity:1;}100%{transform:translateY(0); opacity:1; filter:blur(0);}}
+  .reel.spinning .lockbtn{opacity:.5;}
+  .reel.landed{animation:reelland .42s cubic-bezier(.2,.85,.3,1.35);}
+  @keyframes reelland{0%{transform:translateY(-4px) scale(.94);}55%{transform:translateY(0) scale(1.04);}100%{transform:none;}}
 
   /* licence-clean player token (silhouette + country + initials) */
   .tok svg{display:block; width:100%; height:100%;}
-  .tok .mono{font-family:'JetBrains Mono',monospace; font-weight:600;}
+  .tok .mono{font-variant-numeric:tabular-nums; font-weight:var(--weight-medium);}
 
-  .panel{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:16px;}
-  .row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-4);}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:var(--space-3);}
 
-  button{font-family:inherit; cursor:pointer; border-radius:11px; border:none; color:inherit;}
-  .spin{background:var(--amber); color:#0d0d10; font-weight:700; font-size:16px; padding:13px 22px;}
+  button{font-family:var(--font-body); cursor:pointer; border-radius:var(--radius-sm); border:none; color:inherit;}
+  /* primary = the single green CTA per view (Spin / Play again) */
+  .spin{background:var(--color-primary); color:var(--green-on); font-weight:var(--weight-medium); font-size:var(--text-base); padding:var(--space-3) var(--space-6);}
+  .spin:hover:not(:disabled){background:var(--green-hover);}
   .spin:disabled{opacity:.4; cursor:default;}
-  .ghost{background:var(--panel2); color:var(--muted); border:1px solid var(--line); font-weight:600; font-size:13px; padding:9px 14px;}
+  .ghost{background:var(--surface-raised); color:var(--text-muted); border:1px solid var(--border); font-weight:var(--weight-medium); font-size:var(--text-sm); padding:var(--space-2) var(--space-3);}
   .spin:active,.ghost:active{transform:translateY(1px);}
+  /* reroll is a secondary action → purple accent, not the primary green */
+  #spinBtn{background:var(--surface-raised); color:var(--color-accent); border:1px solid var(--purple-deep);}
+  #spinBtn:hover:not(:disabled){background:var(--purple-deep); color:var(--purple-on);}
 
   /* spun player */
-  .spun{display:none; margin-top:4px;}
-  .spun .who{display:flex; align-items:baseline; gap:10px; margin-bottom:4px;}
-  .spun .who .pn{font-family:'Fraunces',serif; font-weight:600; font-size:21px;}
-  .spun .who .arch{font-size:12.5px; color:var(--muted);}
-  .hint{font-size:12.5px; color:var(--muted); margin-bottom:12px;}
-  .attrs{display:grid; grid-template-columns:repeat(3,1fr); gap:9px;}
+  .spun{display:none; margin-top:var(--space-1);}
+  .spun .who{display:flex; align-items:baseline; gap:var(--space-3); margin-bottom:var(--space-1);}
+  .spun .who .pn{font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-xl);}
+  .spun .who .arch{font-size:var(--text-sm); color:var(--text-muted);}
+  .hint{font-size:var(--text-sm); color:var(--text-muted); margin-bottom:var(--space-3);}
+  .attrs{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-2);}
   @media(max-width:560px){ .attrs{grid-template-columns:repeat(2,1fr);} }
-  .attr{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; text-align:left;
+  .attr{background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-3); text-align:left;
     transition:.12s; width:100%;}
-  .attr .ak{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
-  .attr .av{font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:600; margin-top:2px;}
-  .attr.pick{border-color:var(--amber);} .attr.pick:hover{background:var(--amber-soft);}
+  .attr .ak{font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;}
+  .attr .av{font-variant-numeric:tabular-nums; font-size:var(--text-xl); font-weight:var(--weight-medium); margin-top:2px;}
+  .attr.pick{border-color:var(--green);} .attr.pick:hover{background:var(--surface-raised);}
   .attr.locked{opacity:.34; cursor:default;}
-  .attr.locked .ak::after{content:' · taken'; color:var(--amber);}
+  .attr.locked .ak::after{content:' · taken'; color:var(--text-muted);}
 
   /* run */
-  .levers{display:flex; gap:10px; margin:14px 0;}
-  .lev{flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
-  .lev .k{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
-  .lev .vv{font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:600;}
-  .round{display:flex; align-items:center; gap:11px; background:var(--panel); border:1px solid var(--line);
-    border-radius:11px; padding:10px 13px; margin-bottom:7px;}
-  .round.win{border-color:#2f5a3f;} .round.loss{border-color:#5a2f2f;} .round.dnp{opacity:.3;}
-  .round .rd{width:34px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
-  .round .opp{flex:1;} .round .opp .nm{font-weight:600; font-size:14px;} .round .opp .ov{font-size:11px; color:var(--muted);}
-  .round .odds{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--blue); width:48px; text-align:right;}
-  .round .score{font-family:'JetBrains Mono',monospace; font-size:13px; width:104px; text-align:right;}
-  .round .score.w{color:var(--green);} .round .score.l{color:var(--red);}
-  .verdict{font-family:'Fraunces',serif; font-size:22px; font-weight:600; margin:14px 0 2px; text-align:center;}
-  .verdict.title{color:var(--amber);} .verdict.out{color:var(--muted);}
-  .verdict-sub{text-align:center; font-size:13px; color:var(--muted);}
+  .levers{display:flex; gap:var(--space-3); margin:var(--space-4) 0;}
+  .lev{flex:1; background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-3);}
+  .lev .k{font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;}
+  .lev .vv{font-variant-numeric:tabular-nums; font-size:var(--text-lg); font-weight:var(--weight-medium);}
+  .round{display:flex; align-items:center; gap:var(--space-3); background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-2);
+    transition:opacity .32s ease, transform .32s ease, border-color .3s ease, box-shadow .3s ease;}
+  .round.win{border-color:var(--green-deep);} .round.loss{border-color:var(--border-strong);} .round.dnp{opacity:.3;}
+  .round.appear{opacity:0; transform:translateY(10px);}          /* match slides in as it is played */
+  .round.appear.in{opacity:1; transform:none;}
+  .round.dnp.appear.in{opacity:.3;}
+  .round.active{border-color:var(--purple-deep); box-shadow:0 0 0 1px var(--purple-deep);} /* match in progress */
+  .round .rd{width:34px; font-variant-numeric:tabular-nums; font-size:var(--text-xs); color:var(--text-muted);}
+  .round .opp{flex:1; min-width:0;} .round .opp .nm{font-weight:var(--weight-medium); font-size:var(--text-sm);} .round .opp .ov{font-size:var(--text-xs); color:var(--text-muted);}
+  /* set-by-set score: one boxed chip per set, green if you won it, red if you lost it */
+  .round .sets{display:flex; gap:var(--space-2); justify-content:flex-end; flex-wrap:wrap; align-items:center; min-height:26px;}
+  .round .sets .dash{color:var(--text-muted); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+  .set{font-variant-numeric:tabular-nums; font-size:var(--text-sm); font-weight:var(--weight-medium); line-height:1;
+    padding:var(--space-1) var(--space-2); border-radius:var(--radius-sm); border:1px solid var(--border);
+    min-width:40px; text-align:center; animation:setpop .34s cubic-bezier(.2,.85,.3,1.35);}
+  .set.w{border-color:var(--win); color:var(--win); background:color-mix(in srgb, var(--win) 18%, transparent);}
+  .set.l{border-color:var(--loss); color:var(--loss); background:color-mix(in srgb, var(--loss) 18%, transparent);}
+  @keyframes setpop{0%{transform:scale(.55); opacity:0;}60%{transform:scale(1.12);}100%{transform:scale(1); opacity:1;}}
+  @media (prefers-reduced-motion: reduce){ .set{animation:none;} .round.appear{opacity:1; transform:none;} .round.dnp.appear{opacity:.3;} }
+  .verdict{font-family:var(--font-display); font-size:var(--text-xl); font-weight:var(--weight-medium); margin:var(--space-4) 0 var(--space-1); text-align:center;}
+  .verdict.title{color:var(--gold);} .verdict.out{color:var(--text-muted);}
+  .verdict-sub{text-align:center; font-size:var(--text-sm); color:var(--text-muted);}
 
   /* meta */
-  .spins{font-size:12.5px; color:var(--muted); margin-left:auto;} .spins b{color:var(--ink); font-family:'JetBrains Mono',monospace;}
-  .xfac{display:none; gap:18px; margin-top:12px; font-size:12.5px; color:var(--muted);}
-  .xfac .mtr{font-family:'JetBrains Mono',monospace; letter-spacing:1px; color:var(--amber);}
+  .spins{font-size:var(--text-sm); color:var(--text-muted); margin-left:auto;} .spins b{color:var(--text); font-variant-numeric:tabular-nums;}
+  .xfac{display:none; gap:var(--space-4); margin-top:var(--space-3); font-size:var(--text-sm); color:var(--text-muted);}
+  .xfac .mtr{font-variant-numeric:tabular-nums; letter-spacing:1px; color:var(--color-accent);}
   .levers{flex-wrap:wrap;} .lev{min-width:88px;}
-  .round .rd .bo5{display:block; font-size:9px; color:var(--amber); letter-spacing:.05em;}
+  .round .rd .bo5{display:block; font-size:var(--text-xs); color:var(--color-accent); letter-spacing:.05em;}
   .spun{animation:fadein .22s ease;}
   .verdict{animation:fadein .3s ease;}
   @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
@@ -117,14 +144,99 @@
   @keyframes pop{0%{transform:scale(1);} 42%{transform:scale(1.06);} 100%{transform:scale(1);}}
   .attr.pick{transition:.12s;} .attr.pick:hover{transform:translateY(-2px);}
   /* share + notices */
-  .share{margin-top:14px; background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:14px;}
-  .share pre{font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.5; white-space:pre-wrap; margin:0 0 11px; color:var(--ink);}
-  .copybtn{background:var(--green); color:#0d0d10; font-weight:700; font-size:13px; padding:10px 16px;}
-  .copybtn.done{background:var(--blue);}
-  .notice{background:var(--amber-soft); border:1px solid var(--amber); color:var(--amber); border-radius:10px; padding:11px 13px; font-size:13px; margin-bottom:14px;}
-  .disclaimer{font-size:11px; color:var(--muted); line-height:1.5; margin:22px 0 4px; padding-top:14px; border-top:1px solid var(--line);}
-  .consent{font-size:11.5px; color:var(--muted); margin-top:18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-  .consent .ghost{padding:6px 10px;}
+  .share{margin-top:var(--space-4); background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-4);}
+  .share pre{font-family:var(--font-body); font-variant-numeric:tabular-nums; font-size:var(--text-sm); line-height:var(--leading-body); white-space:pre-wrap; margin:0 0 var(--space-3); color:var(--text);}
+  /* Copy = secondary accent action; turns green on success */
+  .copybtn{background:var(--surface-raised); color:var(--color-accent); border:1px solid var(--purple-deep); font-weight:var(--weight-medium); font-size:var(--text-sm); padding:var(--space-3) var(--space-4);}
+  .copybtn:hover{background:var(--purple-deep); color:var(--purple-on);}
+  .copybtn.done{background:var(--color-primary); color:var(--green-on); border-color:transparent;}
+  .notice{background:var(--surface-raised); border:1px solid var(--purple-deep); color:var(--text); border-radius:var(--radius-md); padding:var(--space-3); font-size:var(--text-sm); margin-bottom:var(--space-3);}
+  .disclaimer{font-size:var(--text-xs); color:var(--text-muted); line-height:var(--leading-body); margin:var(--space-6) 0 var(--space-1); padding-top:var(--space-3); border-top:1px solid var(--border);}
+  .consent{font-size:var(--text-xs); color:var(--text-muted); margin-top:var(--space-4); display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap;}
+  .consent .ghost{padding:var(--space-2) var(--space-3);}
+
+  /* ============ Phase 2/3: full-viewport stage + flippable Top Trumps card ============ */
+  body.locked{ overflow:hidden; }
+  .stage{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
+    background:var(--canvas); padding:var(--space-6) var(--space-4);
+    opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s ease; }
+  .stage.show{ opacity:1; visibility:visible; }
+  .stage-inner{ display:flex; flex-direction:column; align-items:center; gap:var(--space-4); width:100%; max-height:100%; }
+
+  /* zoom wrapper carries the "blow-up during sim → shrink to reveal a card" transform + 3D perspective.
+     translateY recentres the blown-up card (its resting spot sits high, above the finish controls). */
+  .card-zoom{ perspective:1600px; transform:translateY(var(--card-ty,0px)) scale(var(--card-scale,1)); transform-origin:center center;
+    transition:transform .9s cubic-bezier(.2,.7,.2,1); will-change:transform; }
+  .card{ position:relative; width:min(86vw,360px); aspect-ratio:36/60; }
+  .card-inner{ position:absolute; inset:0; transform-style:preserve-3d; transition:transform .95s cubic-bezier(.2,.7,.2,1); }
+  .card.flipped .card-inner{ transform:rotateY(180deg); }
+  .card.flippable{ cursor:pointer; }
+  .card-face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface);
+    display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -24px rgba(0,0,0,.8); }
+  .card-back{ transform:rotateY(0deg); }        /* shown first — the simulation */
+  .card-front{ transform:rotateY(180deg); }     /* revealed by the flip — the Top Trumps stats */
+
+  /* --- card back: the live simulation reveal --- */
+  .cb-head{ padding:var(--space-3) var(--space-4) var(--space-2); border-bottom:1px solid var(--border); text-align:center; }
+  .cb-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-lg); }
+  .cb-sub{ font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
+  .cb-run{ flex:1; overflow-y:auto; padding:var(--space-3) var(--space-3) var(--space-4); }
+  .cb-run::-webkit-scrollbar{ width:6px; } .cb-run::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:var(--radius-pill); }
+  /* compact, fixed-width rows so revealing set chips never reflow the round labels */
+  .cb-run .round{ gap:var(--space-2); padding:var(--space-2) var(--space-3); }
+  .cb-run .round .rd{ width:28px; }
+  .cb-run .round .opp{ min-width:0; }
+  .cb-run .round .opp .nm{ font-size:var(--text-xs); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cb-run .round .sets{ flex:0 0 150px; justify-content:flex-start; flex-wrap:nowrap; gap:var(--space-1); min-height:22px; }
+  .cb-run .set{ min-width:26px; font-size:var(--text-xs); padding:2px var(--space-1); }
+
+  /* --- card front: Top Trumps (portrait · purple name banner · striped stat rows) --- */
+  .tt{ flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .tt-photo{ position:relative; flex:0 0 33%; background:var(--surface-raised); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center; }
+  .tt-emblem{ width:42%; max-width:132px; aspect-ratio:1; }
+  .tt-emblem svg{ width:100%; height:100%; display:block; }
+  .tt-badge{ position:absolute; bottom:var(--space-2); left:50%; transform:translateX(-50%); white-space:nowrap;
+    font-size:var(--text-xs); font-weight:var(--weight-medium); padding:2px var(--space-3); border-radius:var(--radius-pill); border:1px solid transparent; }
+  .tt-badge.run{ background:var(--purple-deep); color:var(--purple-on); }
+  .tt-badge.champ{ background:color-mix(in srgb, var(--gold) 22%, transparent); color:var(--gold); border-color:var(--gold); }
+  /* name banner — the Top Trumps signature (purple UI heading bar, not a tinted content surface) */
+  .tt-banner{ background:var(--purple-deep); color:var(--purple-on); text-align:center;
+    font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-lg); line-height:1.15; padding:var(--space-2) var(--space-3); }
+  .tt-flavor{ text-align:center; font-family:var(--font-display); font-style:italic; color:var(--text-muted);
+    font-size:var(--text-sm); line-height:1.25; padding:var(--space-2) var(--space-4); border-bottom:1px solid var(--border); }
+  .tt-stats{ display:flex; flex-direction:column; flex:1 1 auto; }
+  .tt-row{ display:flex; align-items:center; justify-content:space-between; gap:var(--space-3);
+    flex:1 1 0; min-height:0; padding:0 var(--space-4); }
+  .tt-row:nth-child(odd){ background:var(--surface); }
+  .tt-row:nth-child(even){ background:var(--surface-raised); }
+  .tt-row.tt-overall{ background:var(--surface-raised); border-bottom:1px solid var(--border); }
+  .tt-nm{ display:flex; flex-direction:column; min-width:0; }
+  .tt-nm .k{ font-size:var(--text-sm); font-weight:var(--weight-medium); line-height:1.2; }
+  .tt-row.tt-overall .tt-nm .k{ font-family:var(--font-display); font-size:var(--text-base); }
+  .tt-nm .src{ font-size:var(--text-xs); color:var(--text-faint); line-height:1.2; }
+  .tt-val{ font-variant-numeric:tabular-nums; font-size:var(--text-xl); font-weight:var(--weight-medium); line-height:1; }
+  .tt-row.tt-overall .tt-val{ font-family:var(--font-display); font-size:var(--text-2xl); color:var(--green); }
+
+  /* front reveal choreography (rows fan in, numbers count up) */
+  .tt-row{ opacity:0; transform:translateY(8px); }
+  .tt.reveal .tt-row{ animation:ttrow .45s ease forwards; animation-delay:calc(var(--i,0)*60ms); }
+  @keyframes ttrow{ to{ opacity:1; transform:none; } }
+
+  /* finish controls */
+  .finish-controls{ display:flex; flex-direction:column; align-items:center; gap:var(--space-3); width:min(86vw,360px);
+    opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .5s ease; pointer-events:none; }
+  .finish-controls.show{ opacity:1; transform:none; pointer-events:auto; }
+  .finish-controls .spin{ width:100%; }
+  .finish-controls .copybtn{ width:100%; text-align:center; }
+  .flip-hint{ font-size:var(--text-xs); color:var(--text-faint); }
+
+  @media (prefers-reduced-motion: reduce){
+    .stage, .card-zoom, .card-inner{ transition:none; }
+    .tt-row{ opacity:1; transform:none; }
+    .tt.reveal .tt-row{ animation:none; }
+  }
 </style>
 </head>
 <body>
@@ -141,19 +253,6 @@
     <div class="xfac" id="xfac"></div>
   </div>
 
-  <div class="panel" id="enterPanel" style="display:none;">
-    <div class="levers">
-      <div class="lev"><div class="k">Overall</div><div class="vv mono" id="ovr">—</div></div>
-      <div class="lev"><div class="k">Hold</div><div class="vv mono" id="hold">—</div></div>
-      <div class="lev"><div class="k">Return</div><div class="vv mono" id="ret">—</div></div>
-      <div class="lev"><div class="k">Composure</div><div class="vv mono" id="comp">—</div></div>
-      <div class="lev"><div class="k">Stamina</div><div class="vv mono" id="stam">—</div></div>
-    </div>
-    <button class="spin" id="enterBtn" style="width:100%;">Enter the Wimbledon draw →</button>
-    <div id="run" style="margin-top:14px;"></div>
-    <button class="spin" id="playAgainBtn" style="width:100%; margin-top:14px;">🎾 Play again</button>
-  </div>
-
   <div class="consent" id="consent" style="display:none;"></div>
 
   <div class="disclaimer" id="disclaimer">
@@ -164,6 +263,35 @@
     approximations, not official statistics. Serve, return, forehand, backhand and net ratings are derived
     from non-commercial data sources and are a development prototype pending data licensing before any
     commercial release.
+  </div>
+</div>
+
+<!-- ===== Phase 2 (simulation) + Phase 3 (finish): one persistent flippable card ===== -->
+<div class="stage" id="stage" aria-hidden="true">
+  <div class="stage-inner">
+    <div class="card-zoom" id="cardZoom">
+      <div class="card" id="card">
+        <div class="card-inner">
+          <!-- BACK: the live Wimbledon simulation plays out here first (full-screen) -->
+          <div class="card-face card-back">
+            <div class="cb-head">
+              <div class="cb-title">The Championships</div>
+              <div class="cb-sub">Centre Court · your road to the final</div>
+            </div>
+            <div class="cb-run" id="simRun"></div>
+          </div>
+          <!-- FRONT: the Top Trumps card, revealed after the zoom-out + flip -->
+          <div class="card-face card-front">
+            <div class="tt" id="ttFront"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="finish-controls" id="finishControls">
+      <button class="copybtn" id="shareBtn">Share your card</button>
+      <button class="spin" id="playAgainBtn">🎾 Play again</button>
+      <div class="flip-hint">Tap the card to flip it over</div>
+    </div>
   </div>
 </div>
 
@@ -277,6 +405,50 @@ const ROSTER=[
 ];
 const ATTRS=[{k:'serve',n:'Serve'},{k:'ret',n:'Return'},{k:'fh',n:'Forehand'},{k:'bh',n:'Backhand'},{k:'net',n:'Net'},{k:'con',n:'Consist.'}];
 
+// ===== Wimbledon pedigree bonus =====
+// Each legend's best real Wimbledon result within the ratings window (2006-2017 ATP / 2006-2014 WTA),
+// derived from historical match data. Going deep at SW19 earns a rating lift — the further they got,
+// the bigger the boost — so proven Wimbledon performers are premium picks on the reels.
+const WIMB_BEST={
+  // Champions
+  "Roger Federer":"W","Rafael Nadal":"W","Novak Djokovic":"W","Andy Murray":"W",
+  "Serena Williams":"W","Venus Williams":"W","Petra Kvitova":"W","Marion Bartoli":"W","Amelie Mauresmo":"W",
+  // Finalists
+  "Andy Roddick":"F","Tomas Berdych":"F","Milos Raonic":"F","Marin Cilic":"F",
+  "Maria Sharapova":"F","Vera Zvonareva":"F","Sabine Lisicki":"F","Agnieszka Radwanska":"F",
+  "Eugenie Bouchard":"F","Justine Henin":"F",
+  // Semi-finalists
+  "Jo Wilfried Tsonga":"SF","Juan Martin Del Potro":"SF","Grigor Dimitrov":"SF","Marat Safin":"SF",
+  "Marcos Baghdatis":"SF","Rainer Schuettler":"SF","Richard Gasquet":"SF","Sam Querrey":"SF","Tommy Haas":"SF",
+  "Ana Ivanovic":"SF","Angelique Kerber":"SF","Dinara Safina":"SF","Elena Dementieva":"SF","Jie Zheng":"SF",
+  "Kim Clijsters":"SF","Kirsten Flipkens":"SF","Simona Halep":"SF","Tsvetana Pironkova":"SF","Victoria Azarenka":"SF",
+  // Quarter-finalists
+  "David Ferrer":"QF","Feliciano Lopez":"QF","Fernando Verdasco":"QF","Florian Mayer":"QF","Gilles Muller":"QF",
+  "Gilles Simon":"QF","Ivo Karlovic":"QF","Juan Carlos Ferrero":"QF","Lleyton Hewitt":"QF","Lucas Pouille":"QF",
+  "Mardy Fish":"QF","Mario Ancic":"QF","Mikhail Youzhny":"QF","Philipp Kohlschreiber":"QF","Radek Stepanek":"QF",
+  "Robin Soderling":"QF","Stanislas Wawrinka":"QF","Arnaud Clement":"QF","Anastasia Myskina":"QF",
+  "Barbora Zahlavova Strycova":"QF","Dominika Cibulkova":"QF","Ekaterina Makarova":"QF","Francesca Schiavone":"QF",
+  "Maria Kirilenko":"QF","Michaella Krajicek":"QF","Na Li":"QF","Nadia Petrova":"QF","Nicole Vaidisova":"QF",
+  "Sloane Stephens":"QF","Svetlana Kuznetsova":"QF","Tamarine Tanasugarn":"QF","Tamira Paszek":"QF",
+  // Round of 16
+  "Alexander Zverev":"R16","Andreas Seppi":"R16","Dmitry Tursunov":"R16","Dominic Thiem":"R16","Janko Tipsarevic":"R16",
+  "Jurgen Melzer":"R16","Kei Nishikori":"R16","Kevin Anderson":"R16","Michael Llodra":"R16","Nicolas Mahut":"R16",
+  "Roberto Bautista Agut":"R16","Steve Johnson":"R16","Ai Sugiyama":"R16","Anna Chakvetadze":"R16",
+  "Carla Suarez Navarro":"R16","Caroline Wozniacki":"R16","Daniela Hantuchova":"R16","Elena Vesnina":"R16",
+  "Flavia Pennetta":"R16","Jelena Jankovic":"R16","Melanie Oudin":"R16","Patty Schnyder":"R16","Roberta Vinci":"R16",
+  "Yanina Wickmayer":"R16"
+};
+const WIMB_LABEL={W:'Champion',F:'Finalist',SF:'Semi-finalist',QF:'Quarter-finalist',R16:'Last 16'};
+const WIMB_BONUS={W:6,F:4,SF:3,QF:2,R16:1};   // rating points added to every attribute (capped at 100)
+(function applyWimbledonPedigree(){
+  const fields=['serve','ret','fh','bh','net','con','clutch','stam'];
+  for(const p of ROSTER){
+    const code=WIMB_BEST[p.n]; if(!code) continue;
+    p.wimb=code; p.wimbBonus=WIMB_BONUS[code]||0;
+    for(const f of fields) p[f]=Math.min(100, p[f]+p.wimbBonus);
+  }
+})();
+
 // ===== config =====
 const GAME_VERSION='3.2.0';
 const RATINGS_VERSION='wimbledon-ratings-pipeline-v1';
@@ -348,6 +520,7 @@ const source={};
 let reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
 let pickedSources=[]; // the locked reels' players → drive inherited clutch/stamina
 let mode='free', currentSeed='', dealCount=0, respinsLeft=DAILY_RESPINS;
+let runToken=0; // bumped each new game so an in-flight tournament reveal aborts cleanly
 
 function lockedReels(){ return reels.filter(r=>r.locked); }
 function allLocked(){ return reels.every(r=>r.locked); }
@@ -395,7 +568,7 @@ function initials(name){
   const first=parts[0][0]||''; const last=parts.length>1?parts[parts.length-1][0]:'';
   return (first+last).toUpperCase();
 }
-function tourHue(t){ return t==='wta'? 285 : 205; } // subtle tour tint (ATP blue-ish / WTA violet-ish)
+function tourHue(t){ return t==='wta'? 265 : 150; } // subtle tour tint aligned to brand (ATP grass-green / WTA royal-purple)
 function tokenSVG(p){
   const ini=initials(p&&p.n), cc=(p&&p.c)||'', h=tourHue(p&&p.t);
   // deterministic backdrop tint from name so each token is visually distinct but stable
@@ -410,32 +583,41 @@ function tokenSVG(p){
     <!-- silhouette -->
     <circle cx="32" cy="25" r="10" fill="rgba(255,255,255,.16)"/>
     <path d="M14 60 q0-16 18-16 t18 16" fill="rgba(255,255,255,.16)"/>
-    <text x="32" y="30" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="600"
-      font-size="17" fill="#f4f1ea">${ini}</text>
-    ${cc?`<text x="32" y="52" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-weight="600"
-      font-size="10" letter-spacing="1" fill="rgba(244,241,234,.85)">${cc}</text>`:''}
+    <text x="32" y="30" text-anchor="middle" font-family="var(--font-body)" font-weight="500"
+      font-size="17" fill="var(--text)">${ini}</text>
+    ${cc?`<text x="32" y="52" text-anchor="middle" font-family="var(--font-body)" font-weight="500"
+      font-size="10" letter-spacing="1" fill="var(--text-muted)">${cc}</text>`:''}
   </svg>`;
 }
 
 // ===== rendering =====
-function renderReels(justKey, spinningSet){
+let animating=false; // true while reels are visibly spinning; blocks input until they settle
+const prefersReducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function renderReels(justKey, spinningSet, landedSet){
   const host=$('reels'); host.innerHTML='';
   reels.forEach((r,i)=>{
     const at=ATTRS[i], p=r.player;
     const d=document.createElement('div');
     const isSpinning=spinningSet&&spinningSet.has(i);
-    const canLock = p && !r.locked && !allLocked();
-    d.className='reel'+(r.locked?' locked':'')+(isSpinning?' spinning':'')+(justKey===at.k?' just':'')+(canLock?' pickable':'');
+    const isLanded=landedSet&&landedSet.has(i);
+    const canLock = p && !r.locked && !allLocked() && !isSpinning;
+    d.className='reel'+(r.locked?' locked':'')+(isSpinning?' spinning':'')+(isLanded?' landed':'')+(justKey===at.k?' just':'')+(canLock?' pickable':'');
     const val = p? p[at.k] : '—';
     let btnLabel, btnDisabled;
     if(r.locked){ btnLabel='✓ '+at.n+' locked'; btnDisabled=true; }
+    else if(isSpinning){ btnLabel='Spinning…'; btnDisabled=true; }
     else if(!p){ btnLabel='Spin to deal'; btnDisabled=true; }
     else { btnLabel='Pick '+at.n; btnDisabled=false; }
+    const showPed = p && p.wimb && !isSpinning;
+    const pedHTML = showPed
+      ? `<div class="ped ${p.wimb==='W'?'champ':'run'}">${p.wimb==='W'?'🏆 ':''}${WIMB_LABEL[p.wimb]}</div>`
+      : `<div class="ped none">·</div>`;
     d.innerHTML=`<div class="cat">${at.n}</div>
       <div class="tok">${tokenSVG(p)}</div>
       <div class="pnm">${p? p.n : '—'}</div>
+      ${pedHTML}
       <div class="val">${val}</div>
-      <div class="src">${r.locked? ('from '+p.n) : (p? p.a : '')}</div>
+      <div class="src">${r.locked? ('from '+p.n) : ''}</div>
       <button class="lockbtn" ${btnDisabled?'disabled':''}>${btnLabel}</button>`;
     if(canLock){ d.addEventListener('click',()=>lockReel(i)); }
     host.appendChild(d);
@@ -445,7 +627,7 @@ function renderReels(justKey, spinningSet){
 function refreshControls(){
   const lockedCount=lockedReels().length;
   const noRespins=respinsLeft<=0;
-  $('spinBtn').disabled = noRespins || allLocked();
+  $('spinBtn').disabled = animating || noRespins || allLocked();
   $('spinBtn').textContent = noRespins? 'No respins left' : ('🎾 Respin · '+respinsLeft+' left');
   $('spinsLeft').innerHTML=`<b>${respinsLeft}</b> respins left · <b>${lockedCount}</b>/6 locked`;
   renderXfac();
@@ -459,15 +641,57 @@ function renderXfac(){
   host.innerHTML=`<div>Composure <span class="mtr">${meter(inh.clutch)}</span> ${inh.clutch.toFixed(0)}</div>
     <div>Stamina <span class="mtr">${meter(inh.stam)}</span> ${inh.stam.toFixed(0)}</div>`;
 }
+// Slot-machine spin: each unlocked reel rapidly cycles through random legends, decelerates,
+// and drops onto its dealt player. Reels stop left→right so the board "lands" one at a time.
+function startSpin(spinningSet, justKey, onDone){
+  const idxs=[...spinningSet].sort((a,b)=>a-b);
+  if(!idxs.length || prefersReducedMotion){          // respect reduced-motion / nothing to spin
+    animating=false; renderReels(justKey, null, spinningSet); onDone&&onDone(); return;
+  }
+  animating=true;
+  renderReels(justKey, spinningSet);                 // spinning reels render frozen + non-interactive
+  const host=$('reels');
+  let remaining=idxs.length;
+  idxs.forEach((idx,pos)=>{
+    const card=host.children[idx];
+    const tok=card.querySelector('.tok'), pnm=card.querySelector('.pnm'), val=card.querySelector('.val');
+    const attrKey=reels[idx].key, finalPlayer=reels[idx].player;
+    const dur=560+pos*200;                           // staggered stop time (left→right)
+    const stopAt=performance.now()+dur;
+    const tick=()=>{
+      const remain=stopAt-performance.now();
+      if(remain<=0){                                 // land on the dealt player
+        tok.innerHTML=tokenSVG(finalPlayer);
+        pnm.textContent=finalPlayer.n;
+        val.textContent=finalPlayer[attrKey];
+        card.classList.remove('spinning');
+        if(--remaining===0){                         // whole board settled → restore interactivity + pop
+          animating=false;
+          renderReels(justKey, null, spinningSet);
+          onDone&&onDone();
+        }
+        return;
+      }
+      const rp=ROSTER[Math.floor(Math.random()*ROSTER.length)]; // flash a random legend
+      tok.innerHTML=tokenSVG(rp);
+      pnm.innerHTML='<span class="roll">'+rp.n+'</span>';
+      val.innerHTML='<span class="roll">'+rp[attrKey]+'</span>';
+      const t=1-remain/dur;                          // 0→1 progress: slow down as we approach the stop
+      setTimeout(tick, 40+t*t*135);                  // ~40ms fast → ~175ms just before landing
+    };
+    tick();
+  });
+}
 function respin(){
-  if(respinsLeft<=0 || allLocked()) return;
+  if(animating || respinsLeft<=0 || allLocked()) return;
   respinsLeft--; dealCount++;         // spend a manual re-roll; re-deal every unlocked reel
   const spinning=new Set(reels.map((r,i)=>r.locked?null:i).filter(i=>i!==null));
   dealReels(dealCount);
   track('respin',{respinsLeft, dealCount, dealt:reels.map(r=>r.player?{cat:r.key,player:r.player.n,val:r.player[r.key],locked:r.locked}:null)});
-  renderReels(null, spinning);
+  startSpin(spinning, null);
 }
 function lockReel(i){
+  if(animating) return;               // ignore clicks while the reels are still spinning
   const r=reels[i]; if(r.locked||!r.player||allLocked()) return;
   r.locked=true;
   build[r.key]=r.player[r.key]; source[r.key]=r.player.n;
@@ -475,25 +699,157 @@ function lockReel(i){
   track('lock',{attr:r.key,value:r.player[r.key],source:r.player.n});
   if(allLocked()){                    // last shot picked → freeze the board and run the draw automatically
     renderReels(r.key);
-    finishDraft();
+    startSimulation();
     return;
   }
   dealCount++;                        // a pick auto-advances: re-deal the remaining unlocked reels (free)
   const spinning=new Set(reels.map((rr,idx)=>rr.locked?null:idx).filter(idx=>idx!==null));
   dealReels(dealCount);
-  renderReels(r.key, spinning);
+  startSpin(spinning, r.key);
 }
-function finishDraft(){
-  const champ=championAttrs(), l=levers(champ);
-  $('ovr').textContent=overall(champ).toFixed(0);
-  $('hold').textContent=l.hold.toFixed(1);
-  $('ret').textContent=l.ret.toFixed(1);
-  $('comp').textContent=champ.clutch.toFixed(0);
-  $('stam').textContent=champ.stam.toFixed(0);
-  $('enterPanel').style.display='block';
-  $('enterBtn').style.display='none';   // auto-sim — the last pick runs the draw for you
-  enterDraw();
-  $('enterPanel').scrollIntoView({behavior:'smooth', block:'start'});
+// ============ Phase 2/3: simulation on the card back → zoom-out → flip to Top Trumps ============
+let lastChamp=null, lastPlay=null, lastRes=null, cardToken=0;
+// One punchy line per shot, keyed to the champion's single best attribute (editorial flavour text).
+const FLAVOR={
+  serve:'A serve carved out of thunder.',
+  ret:'Gets it all back — then a little more.',
+  fh:'A forehand that bends the court.',
+  bh:'A backhand struck like a bell.',
+  net:'Lives at the net. Pays no rent.',
+  con:'Metronomic, relentless, unbothered.'
+};
+function lastName(n){ const p=String(n||'').trim().split(/\s+/); return p[p.length-1]||n; }
+function bestStat(champ){ let bk=ATTRS[0].k, bv=-1; for(const at of ATTRS){ if(champ[at.k]>bv){ bv=champ[at.k]; bk=at.k; } } return bk; }
+function bestStatFlavor(champ){ return FLAVOR[bestStat(champ)]; }
+function cardAttrName(k){ return k==='con'? 'Consistency' : (ATTRS.find(a=>a.k===k)||{}).n; }
+
+// Licence-clean composite emblem: neutral silhouette in an accent ring (gold ★ for a champion, else green).
+function championEmblemSVG(champ, play){
+  const ring = play.won? 'var(--gold)' : 'var(--green)';
+  return `<svg viewBox="0 0 120 120" role="img" aria-label="Your champion">
+    <defs>
+      <linearGradient id="ttEmb" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--surface-raised)"/><stop offset="1" stop-color="var(--surface)"/>
+      </linearGradient>
+      <clipPath id="ttClip"><circle cx="60" cy="60" r="54"/></clipPath>
+    </defs>
+    <circle cx="60" cy="60" r="56" fill="url(#ttEmb)" stroke="${ring}" stroke-width="2.5"/>
+    <g clip-path="url(#ttClip)" fill="rgba(255,255,255,.15)">
+      <circle cx="60" cy="50" r="19"/>
+      <ellipse cx="60" cy="104" rx="34" ry="28"/>
+    </g>
+    ${play.won?`<path d="M60 16 l4.9 9.9 10.9 1.6 -7.9 7.7 1.9 10.9 -9.8-5.2 -9.8 5.2 1.9-10.9 -7.9-7.7 10.9-1.6z" fill="var(--gold)"/>`:''}
+  </svg>`;
+}
+
+// Build the Top Trumps front: portrait + result chip, purple name banner, flavour line, striped stat rows.
+function buildCardFront(champ, play){
+  const ovr=Math.round(overall(champ));
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const badge = play.won
+    ? `<div class="tt-badge champ">🏆 Champion</div>`
+    : `<div class="tt-badge run">${cap(RD_NAME[play.reached])}</div>`;
+  const statRows=ATTRS.map((at,i)=>{
+    const v=Math.round(champ[at.k]);
+    const src=source[at.k]? 'from '+lastName(source[at.k]) : '';
+    return `<div class="tt-row" style="--i:${i+1}">
+      <div class="tt-nm"><span class="k">${cardAttrName(at.k)}</span>${src?`<span class="src">${src}</span>`:''}</div>
+      <div class="tt-val mono" data-count="${v}">0</div>
+    </div>`;
+  }).join('');
+  $('ttFront').innerHTML=`
+    <div class="tt-photo">
+      <div class="tt-emblem">${championEmblemSVG(champ,play)}</div>
+      ${badge}
+    </div>
+    <div class="tt-banner">${archetypeName(champ)}</div>
+    <div class="tt-flavor">${bestStatFlavor(champ)}</div>
+    <div class="tt-stats">
+      <div class="tt-row tt-overall" style="--i:0">
+        <div class="tt-nm"><span class="k">Overall</span></div>
+        <div class="tt-val mono" data-count="${ovr}">0</div>
+      </div>
+      ${statRows}
+    </div>`;
+}
+
+function animateCount(el, to, dur){
+  if(prefersReducedMotion){ el.textContent=to; return; }
+  const start=performance.now();
+  (function tick(now){
+    const t=Math.min(1,(now-start)/dur), e=1-Math.pow(1-t,3);   // easeOutCubic
+    el.textContent=Math.round(to*e);
+    if(t<1) requestAnimationFrame(tick); else el.textContent=to;
+  })(performance.now());
+}
+function startFrontReveal(){
+  const tt=$('ttFront'); tt.classList.add('reveal');           // rows slide in + bars grow (CSS)
+  tt.querySelectorAll('[data-count]').forEach(el=>animateCount(el, +el.getAttribute('data-count'), 900));
+}
+
+// Enter Phase 2: show the stage, blow the card up (back facing) so the sim feels full-screen, play it, then reveal.
+function startSimulation(){
+  const champ=championAttrs();
+  const play=playTournament(champ);
+  lastChamp=champ; lastPlay=play; cardToken=runToken;
+  const res={ won:play.won, reached:play.reached, score:play.score,
+    rounds: play.rounds.map(r=>r.played?(r.win?'win':'loss'):'dnp'),
+    archetype: archetypeName(champ), clutch:champ.clutch, stam:champ.stam, titleOdds:play.titleOdds };
+  lastRes=res;
+  track('result',{mode,score:res.score,won:res.won,reached:res.reached,build:{...build},sources:pickedSources.map(p=>p.n),clutch:champ.clutch,stam:champ.stam,titleOdds:res.titleOdds});
+  saveResult(res,champ);
+  buildCardFront(champ,play);                                   // prep the hidden front behind the sim
+
+  const stage=$('stage'), zoom=$('cardZoom'), card=$('card');
+  card.classList.remove('flipped','flippable');
+  $('finishControls').classList.remove('show');
+  $('ttFront').classList.remove('reveal');
+
+  // Blow the card up to fill the viewport for the sim. Its resting spot sits high (the finish controls
+  // reserve space below), so we translateY it to the true viewport centre too — then the reveal animates
+  // BOTH translate + scale back to rest for one seamless "it was a card all along" move.
+  stage.classList.add('show'); stage.setAttribute('aria-hidden','false');
+  document.body.classList.add('locked');
+  zoom.style.transition='none';
+  zoom.style.setProperty('--card-ty','0px');
+  zoom.style.setProperty('--card-scale','1');
+  void zoom.offsetWidth;                                        // reflow so the rest-size measurement is clean
+  let s=1, ty=0;
+  if(!prefersReducedMotion){
+    const rect=card.getBoundingClientRect();
+    ty=Math.round(window.innerHeight/2 - (rect.top + rect.height/2));   // recentre the blown-up card
+    s=Math.max(1, Math.min((window.innerHeight*0.96)/rect.height, (window.innerWidth*0.96)/rect.width));
+  }
+  zoom.style.setProperty('--card-ty', ty+'px');
+  zoom.style.setProperty('--card-scale', s.toFixed(3));
+  void zoom.offsetWidth;
+  zoom.style.transition='';                                     // re-enable so the later zoom-OUT animates
+
+  const simRun=$('simRun'); simRun.innerHTML='';
+  renderRun(simRun, play, revealCard);                          // reuse the existing round-by-round reveal
+}
+
+// The signature moment: zoom the card back to rest to reveal it IS a card, then flip to the Top Trumps front.
+function revealCard(){
+  if(runToken!==cardToken) return;                             // a new game started mid-reveal → abort
+  const zoom=$('cardZoom'), card=$('card');
+  const flip=()=>{
+    if(runToken!==cardToken) return;
+    card.classList.add('flipped');
+    setTimeout(()=>{
+      if(runToken!==cardToken) return;
+      card.classList.add('flippable');                         // now clickable to flip front⇄back
+      $('finishControls').classList.add('show');
+      startFrontReveal();
+    }, prefersReducedMotion?0:520);
+  };
+  if(prefersReducedMotion){ zoom.style.setProperty('--card-ty','0px'); zoom.style.setProperty('--card-scale','1'); flip(); return; }
+  setTimeout(()=>{                                              // let the verdict breathe
+    if(runToken!==cardToken) return;
+    zoom.style.setProperty('--card-ty','0px');                 // glide + shrink back to the resting card
+    zoom.style.setProperty('--card-scale','1');                // zoom OUT → "oh, it's a card"
+    setTimeout(flip, 900);                                     // flip once the zoom settles
+  }, 800);
 }
 
 
@@ -527,37 +883,83 @@ function playTournament(champ){
     const oddsRng = mode==='daily'? makeRng(currentSeed+'|odds|'+i) : Math.random;
     const wp=winProb(champ,opp,bo,1000,oddsRng,fat); titleOdds*=wp;
     const m=simMatch(champ,opp,bo,playRng,fat);
-    rounds.push({opp,played:true,win:m.win,sets:m.sets,wp,bo,fat});
+    rounds.push({opp,played:true,win:m.win,sets:m.sets,bo,fat});
     reached=RD[i];
     if(m.win) score+=RD_PTS[i]; else alive=false;
   });
   return {opps,rounds,won:alive,reached,score,titleOdds};
 }
-function renderRun(host,play){
+// Suspense reveal: play one match at a time (each slides in), reveal its sets one by one
+// as green (won) / red (lost) chips, then land the round and move on. onDone fires when the
+// whole run has finished revealing so the share card can appear afterwards.
+const T_SET=560, T_ROUND=460, T_DNP=110; // reveal cadence (ms)
+function renderRun(host,play,onDone){
   host.innerHTML='';
-  play.rounds.forEach((r,i)=>{
+  const myToken=runToken;                       // abort if a new game starts mid-reveal
+  const stale=()=>myToken!==runToken;
+  const done=()=>{ if(stale())return; showVerdict(); onDone&&onDone(); };
+
+  if(prefersReducedMotion){                      // no animation: render the whole run at once
+    play.rounds.forEach((r,i)=>host.appendChild(buildRow(r,i,true)));
+    done(); return;
+  }
+
+  let idx=0;
+  (function step(){
+    if(stale()) return;
+    if(idx>=play.rounds.length){ done(); return; }
+    const r=play.rounds[idx], i=idx; idx++;
+    const row=buildRow(r,i,false);
+    host.appendChild(row);
+    requestAnimationFrame(()=>{ if(!stale()) row.classList.add('in'); }); // trigger slide-in
+    row.scrollIntoView({behavior:'smooth', block:'nearest'});
+    if(!r.played){                               // knocked out earlier → flash the unplayed rounds by
+      row.querySelector('.sets').innerHTML='<span class="dash">—</span>';
+      setTimeout(step, T_DNP); return;
+    }
+    row.classList.add('active');                 // "match in progress"
+    revealSets(row, r, 0, ()=>{
+      if(stale()) return;
+      row.classList.remove('active');
+      row.classList.add(r.win?'win':'loss');     // round border lands green/neutral
+      setTimeout(step, T_ROUND);
+    });
+  })();
+
+  function revealSets(row, r, si, finished){
+    if(stale()) return;
+    if(si>=r.sets.length){ finished(); return; }
+    const s=r.sets[si], won=s[0]>s[1];
+    const box=document.createElement('span');
+    box.className='set '+(won?'w':'l');          // green chip if you won the set, red if you lost it
+    box.textContent=s[0]+'-'+s[1];
+    row.querySelector('.sets').appendChild(box);
+    setTimeout(()=>revealSets(row, r, si+1, finished), T_SET);
+  }
+  function buildRow(r,i,instant){
     const ov=overall(r.opp);
     const div=document.createElement('div');
     if(!r.played){
-      div.className='round dnp';
-      div.innerHTML=`<div class="rd">${RD[i]}</div><div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div><div class="odds">—</div><div class="score">—</div>`;
-      host.appendChild(div);return;
+      div.className='round dnp'+(instant?'':' appear');
+      div.innerHTML=`<div class="rd">${RD[i]}</div><div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div><div class="sets">${instant?'<span class="dash">—</span>':''}</div>`;
+      return div;
     }
-    const sc=r.sets.map(s=>s[0]+'-'+s[1]).join(' ');
-    div.className='round '+(r.win?'win':'loss');
+    div.className='round '+(instant?(r.win?'win':'loss'):'appear');
+    const setsHTML = instant? r.sets.map(s=>`<span class="set ${s[0]>s[1]?'w':'l'}">${s[0]}-${s[1]}</span>`).join('') : '';
     div.innerHTML=`<div class="rd">${RD[i]}${r.bo===5?'<span class="bo5">Bo5</span>':''}</div>
       <div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div>
-      <div class="odds">${(r.wp*100).toFixed(0)}%</div>
-      <div class="score ${r.win?'w':'l'}">${sc}</div>`;
-    host.appendChild(div);
-  });
-  const v=document.createElement('div');
-  if(play.won){
-    v.innerHTML=`<div class="verdict title">🏆 WIMBLEDON CHAMPION</div><div class="verdict-sub">Score ${play.score} · pre-tournament title odds ${(play.titleOdds*100).toFixed(1)}%</div>`;
-  }else{
-    v.innerHTML=`<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div><div class="verdict-sub">Score ${play.score} · title odds going in ${(play.titleOdds*100).toFixed(1)}%</div>`;
+      <div class="sets">${setsHTML}</div>`;
+    return div;
   }
-  host.appendChild(v);
+  function showVerdict(){
+    const v=document.createElement('div');
+    if(play.won){
+      v.innerHTML=`<div class="verdict title">🏆 WIMBLEDON CHAMPION</div><div class="verdict-sub">Score ${play.score} · pre-tournament title odds ${(play.titleOdds*100).toFixed(1)}%</div>`;
+    }else{
+      v.innerHTML=`<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div><div class="verdict-sub">Score ${play.score} · title odds going in ${(play.titleOdds*100).toFixed(1)}%</div>`;
+    }
+    host.appendChild(v);
+  }
 }
 function archetypeName(a){
   const entries=[['Cannon',a.serve],['Wall',a.ret],['Hammer',a.fh],['Blade',a.bh],['Net Rusher',a.net],['Metronome',a.con]];
@@ -575,18 +977,7 @@ function shareText(res){
   if(SHARE_URL) lines.push(SHARE_URL);
   return lines.join('\n');
 }
-function renderShare(host,res){
-  const txt=shareText(res);
-  const wrap=document.createElement('div'); wrap.className='share';
-  wrap.innerHTML=`<pre></pre><div class="row"><button class="copybtn" id="copyBtn">Copy result</button></div>`;
-  wrap.querySelector('pre').textContent=txt;
-  host.appendChild(wrap);
-  $('copyBtn').addEventListener('click',async()=>{
-    try{ if(navigator.share){ await navigator.share({text:txt}); } else { await navigator.clipboard.writeText(txt); }
-      const b=$('copyBtn'); b.textContent='Copied ✓'; b.classList.add('done');
-    }catch(e){ try{await navigator.clipboard.writeText(txt);$('copyBtn').textContent='Copied ✓';$('copyBtn').classList.add('done');}catch(_){} }
-  });
-}
+// (the old text/emoji share was replaced by shareCard() — a PNG export of the Top Trumps card)
 function updateStreak(){
   const today=todayStr();
   let s=JSON.parse(localStorage.getItem('bac_streak')||'null');
@@ -596,16 +987,100 @@ function updateStreak(){
   localStorage.setItem('bac_streak',JSON.stringify(s));
   return s;
 }
-function enterDraw(){
-  const champ=championAttrs();
-  const play=playTournament(champ);
-  const host=$('run'); renderRun(host,play);
-  const res={ won:play.won, reached:play.reached, score:play.score,
-    rounds: play.rounds.map(r=>r.played?(r.win?'win':'loss'):'dnp'),
-    archetype: archetypeName(champ), clutch:champ.clutch, stam:champ.stam, titleOdds:play.titleOdds };
-  renderShare(host,res);
-  track('result',{mode,score:res.score,won:res.won,reached:res.reached,build:{...build},sources:pickedSources.map(p=>p.n),clutch:champ.clutch,stam:champ.stam,titleOdds:res.titleOdds});
-  saveResult(res,champ);
+// ============ share: render the Top Trumps front to a PNG (Canvas 2D, fully offline) ============
+// We read the design tokens live from :root so the image never hardcodes colour — it always
+// matches tokens.css. (html2canvas is avoided: it can't render color-mix() and needs the network.)
+function roundRectPath(x,rx,ry,w,h,r){ x.beginPath(); x.moveTo(rx+r,ry); x.arcTo(rx+w,ry,rx+w,ry+h,r); x.arcTo(rx+w,ry+h,rx,ry+h,r); x.arcTo(rx,ry+h,rx,ry,r); x.arcTo(rx,ry,rx+w,ry,r); x.closePath(); }
+function drawStar(x,cx,cy,spikes,outer,inner,fill){
+  let rot=-Math.PI/2; const step=Math.PI/spikes; x.beginPath(); x.moveTo(cx,cy-outer);
+  for(let i=0;i<spikes;i++){ x.lineTo(cx+Math.cos(rot)*outer, cy+Math.sin(rot)*outer); rot+=step;
+    x.lineTo(cx+Math.cos(rot)*inner, cy+Math.sin(rot)*inner); rot+=step; }
+  x.closePath(); x.fillStyle=fill; x.fill();
+}
+async function renderCardImage(){
+  try{ if(document.fonts&&document.fonts.ready) await document.fonts.ready; }catch(e){}
+  const cs=getComputedStyle(document.documentElement), T=k=>cs.getPropertyValue(k).trim();
+  const P={ canvas:T('--canvas'), surface:T('--surface'), raised:T('--surface-raised'), border:T('--border'),
+    text:T('--text'), muted:T('--text-muted'), faint:T('--text-faint'), greenOn:T('--green-on'),
+    green:T('--green'), purpleDeep:T('--purple-deep'), purpleOn:T('--purple-on'), gold:T('--gold') };
+  const champ=lastChamp, play=lastPlay, won=play.won;
+  const W=720, H=1120, pad=48;
+  const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
+  const x=canvas.getContext('2d');
+  x.fillStyle=P.canvas; x.fillRect(0,0,W,H);
+  const inset=12, radius=26, cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  x.save();
+  roundRectPath(x,inset,inset,W-inset*2,H-inset*2,radius); x.clip();
+  x.fillStyle=P.surface; x.fillRect(inset,inset,W-inset*2,H-inset*2);
+
+  // photo area + composite emblem (gold ring + star for a champion, else green)
+  const photoH=Math.round((H-inset*2)*0.33);
+  x.fillStyle=P.raised; x.fillRect(inset,inset,W-inset*2,photoH);
+  const ecx=W/2, ecy=inset+photoH*0.44, er=Math.min(photoH*0.34,98);
+  x.beginPath(); x.arc(ecx,ecy,er,0,7); x.fillStyle=P.surface; x.fill(); x.lineWidth=5; x.strokeStyle=won?P.gold:P.green; x.stroke();
+  x.save(); x.beginPath(); x.arc(ecx,ecy,er-3,0,7); x.clip(); x.fillStyle='rgba(255,255,255,.15)';
+  x.beginPath(); x.arc(ecx,ecy-er*0.14,er*0.42,0,7); x.fill();
+  x.beginPath(); x.ellipse(ecx,ecy+er*0.78,er*0.62,er*0.52,0,0,7); x.fill(); x.restore();
+  if(won) drawStar(x,ecx,ecy-er*0.5,5,er*0.2,er*0.09,P.gold);
+  // result badge chip over the photo
+  const bt=won?'Champion':cap(RD_NAME[play.reached]);
+  x.font='500 22px Inter'; const bw=x.measureText(bt).width+34, bh=38, by=inset+photoH-bh-16;
+  roundRectPath(x,W/2-bw/2,by,bw,bh,bh/2); x.fillStyle=won?P.gold:P.purpleDeep; x.fill();
+  x.fillStyle=won?P.greenOn:P.purpleOn; x.textAlign='center'; x.textBaseline='middle'; x.fillText(bt,W/2,by+bh/2+1);
+
+  // purple name banner (Top Trumps signature)
+  let y=inset+photoH; const bannerH=66;
+  x.fillStyle=P.purpleDeep; x.fillRect(inset,y,W-inset*2,bannerH);
+  x.fillStyle=P.purpleOn; x.font='500 38px Lora'; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText(archetypeName(champ),W/2,y+bannerH/2+2); y+=bannerH;
+
+  // flavour line (the champion's "description")
+  const flavH=60; x.fillStyle=P.muted; x.font='italic 400 25px Lora'; x.textBaseline='middle';
+  x.fillText(bestStatFlavor(champ),W/2,y+flavH/2);
+  x.strokeStyle=P.border; x.lineWidth=1; x.beginPath(); x.moveTo(inset,y+flavH); x.lineTo(W-inset,y+flavH); x.stroke(); y+=flavH;
+
+  // striped stat rows — Overall (green) then the six shots with their source legend
+  const rowsData=[{k:'Overall',v:Math.round(overall(champ)),src:'',ovr:true}]
+    .concat(ATTRS.map(at=>({k:cardAttrName(at.k),v:Math.round(champ[at.k]),src:source[at.k]?'from '+lastName(source[at.k]):'',ovr:false})));
+  const rowsTop=y, rowH=((H-inset)-y)/rowsData.length;
+  rowsData.forEach((r,i)=>{
+    const ry=rowsTop+i*rowH, cy=ry+rowH/2;
+    x.fillStyle = r.ovr? P.raised : (i%2? P.surface : P.raised);
+    x.fillRect(inset,ry,W-inset*2,rowH);
+    if(r.ovr){ x.strokeStyle=P.border; x.lineWidth=1; x.beginPath(); x.moveTo(inset,ry+rowH); x.lineTo(W-inset,ry+rowH); x.stroke(); }
+    x.textAlign='left'; x.textBaseline='middle';
+    if(r.src){
+      x.fillStyle=P.text; x.font='500 27px Inter'; x.fillText(r.k,pad,cy-11);
+      x.fillStyle=P.faint; x.font='400 18px Inter'; x.fillText(r.src,pad,cy+16);
+    }else{
+      x.fillStyle=P.text; x.font=r.ovr?'500 30px Lora':'500 27px Inter'; x.fillText(r.k,pad,cy);
+    }
+    x.textAlign='right';
+    x.fillStyle=r.ovr?P.green:P.text; x.font=r.ovr?'500 56px Lora':'500 46px Inter';
+    x.fillText(String(r.v),W-pad,cy);
+  });
+  x.restore();
+  roundRectPath(x,inset,inset,W-inset*2,H-inset*2,radius); x.lineWidth=2; x.strokeStyle=P.border; x.stroke();
+  x.textAlign='left'; x.textBaseline='alphabetic';
+  return canvas;
+}
+async function shareCard(){
+  const btn=$('shareBtn'), old=btn.textContent;
+  try{
+    const canvas=await renderCardImage();
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/png'));
+    const file=new File([blob],'wimbledon-champion.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], text:shareText(lastRes)});
+      btn.textContent='Shared ✓'; btn.classList.add('done');
+    }else{
+      const url=URL.createObjectURL(blob), a=document.createElement('a');
+      a.href=url; a.download='wimbledon-champion.png'; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url); btn.textContent='Saved ✓'; btn.classList.add('done');
+    }
+    track('share',{mode,won:lastRes.won,score:lastRes.score,reached:lastRes.reached});
+  }catch(e){ btn.textContent='Try again'; }
+  setTimeout(()=>{ btn.textContent=old; btn.classList.remove('done'); }, 2200);
 }
 
 // ============ analytics (Supabase) — off until BOTH configured AND consented ============
@@ -631,20 +1106,25 @@ function renderConsent(){
 
 // ============ wiring + init ============
 $('spinBtn').addEventListener('click',respin);
-$('enterBtn').addEventListener('click',enterDraw);
+$('card').addEventListener('click',()=>{ if($('card').classList.contains('flippable')) $('card').classList.toggle('flipped'); });
+$('shareBtn').addEventListener('click',shareCard);
 $('playAgainBtn').addEventListener('click',()=>{ startGame(); window.scrollTo({top:0,behavior:'smooth'}); });
 function startGame(){
+  runToken++;                          // invalidate any tournament reveal still animating
   for(const k in build) build[k]=null; for(const k in source) delete source[k];
   reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
   pickedSources=[]; dealCount=0; respinsLeft=DAILY_RESPINS;
-  $('run').innerHTML='';
-  $('enterPanel').style.display='none';
-  $('enterBtn').style.display=''; $('enterBtn').disabled=false;
-  const lev=document.querySelector('#enterPanel .levers'); if(lev) lev.style.display='';
+  const stage=$('stage'); stage.classList.remove('show'); stage.setAttribute('aria-hidden','true');
+  document.body.classList.remove('locked');
+  $('card').classList.remove('flipped','flippable');
+  $('cardZoom').style.setProperty('--card-scale','1');
+  $('finishControls').classList.remove('show');
+  $('ttFront').classList.remove('reveal');
+  $('simRun').innerHTML=''; $('ttFront').innerHTML='';
   currentSeed='free-'+Date.now()+'-'+Math.floor(Math.random()*1e9);
   $('draftPanel').style.display='block';
-  dealReels(0);                        // first deal is free — reels start populated
-  renderReels();
+  dealReels(0);                        // first deal is free — reels roll in on load
+  startSpin(new Set(reels.map((r,i)=>i)), null);
   track('game_start',{mode});
 }
 

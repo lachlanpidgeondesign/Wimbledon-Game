@@ -1,0 +1,88 @@
+/* ===========================================================================
+   Wimbledon (dark) — design tokens
+   Single source of truth. Import this once at the app root; never hardcode hex.
+   Load fonts: Inter (400,500) + Lora (400,500, italic 400) from Google Fonts.
+   =========================================================================== */
+
+:root {
+  /* --- Surfaces (neutral black, no chroma) ------------------------------- */
+  --canvas:          #0A0A0A;   /* page background */
+  --surface:         #151515;   /* cards, panels */
+  --surface-raised:  #1F1F1F;   /* modals, popovers, elevated */
+  --border:          #2A2A2A;   /* default hairline */
+  --border-strong:   #3A3A3A;   /* hover / emphasised divider */
+
+  /* --- Text -------------------------------------------------------------- */
+  --text:            #F2F2F2;   /* primary body + headings */
+  --text-muted:      #9A9A9A;   /* secondary, captions */
+  --text-faint:      #6E6E6E;   /* hints, disabled */
+
+  /* --- Green (grass) — the PRIMARY / interactive colour ------------------ */
+  --green:           #46C078;   /* CTAs, active state, primary actions */
+  --green-hover:     #3AAE6C;
+  --green-deep:      #1F6B42;   /* pressed / subtle fills */
+  --green-on:        #08331D;   /* text + icons ON a green fill */
+
+  /* --- Purple (royal) — the ACCENT colour -------------------------------- */
+  --purple:          #B392E6;   /* links, highlights, tags, secondary emphasis */
+  --purple-hover:    #A47FDF;
+  --purple-deep:     #5E3A9E;   /* secondary-button borders, subtle fills */
+  --purple-on:       #ECE3FB;   /* text ON a purple-deep fill */
+
+  /* --- Optional heritage gold (use sparingly, or delete) ----------------- */
+  --gold:            #E6C566;   /* champion / streak states only */
+
+  /* --- Win / loss result states (match & set outcomes ONLY) -------------- */
+  --win:             var(--green);   /* a set / round you won */
+  --loss:            #E0655B;        /* a set / round you lost — result chips only */
+
+  /* --- Semantic role aliases — reference THESE in components -------------- */
+  --color-primary:   var(--green);    /* main action */
+  --color-accent:    var(--purple);   /* highlight / link */
+
+  /* --- Typography -------------------------------------------------------- */
+  --font-body:       'Inter', system-ui, -apple-system, sans-serif;
+  --font-display:    'Lora', Georgia, 'Times New Roman', serif;
+
+  --text-xs:         12px;
+  --text-sm:         14px;
+  --text-base:       16px;   /* body default */
+  --text-lg:         19px;
+  --text-xl:         24px;
+  --text-2xl:        32px;
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+
+  --leading-body:    1.6;
+  --leading-heading: 1.2;
+
+  /* --- Radius ------------------------------------------------------------ */
+  --radius-sm:       8px;    /* buttons, inputs */
+  --radius-md:       12px;   /* cards */
+  --radius-pill:     999px;  /* tags, chips */
+
+  /* --- Spacing scale (4px base) ------------------------------------------ */
+  --space-1:         4px;
+  --space-2:         8px;
+  --space-3:         12px;
+  --space-4:         16px;
+  --space-6:         24px;
+  --space-8:         32px;
+}
+
+/* Base defaults — safe to keep or fold into your reset */
+body {
+  background: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  color: var(--text);
+}
