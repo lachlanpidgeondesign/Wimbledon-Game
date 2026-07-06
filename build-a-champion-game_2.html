@@ -13,10 +13,16 @@
   :root{ color-scheme:dark; }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--canvas); color:var(--text); font-family:var(--font-body);
-    line-height:var(--leading-body); padding:var(--space-6) var(--space-4) 70px;}
-  .wrap{max-width:780px; margin:0 auto;}
+    line-height:var(--leading-body); padding:0 0 70px;}
+  .wrap{max-width:780px; margin:0 auto; padding:0 var(--space-4);}
   h1{font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-2xl); margin:0; letter-spacing:-.01em; line-height:var(--leading-heading);}
   h1 .leaf{color:var(--green);}
+  /* Gameplay-stage title banner (replaces the h1 wordmark on the draft view only) */
+  /* Header: flush to the top, sharp corners, capped at the same 780px content max-width
+     (centred). Fixed height + object-fit cover means narrower screens CROP the sides rather
+     than scaling the whole banner down. */
+  h1.title{max-width:780px; margin:0 auto var(--space-4); line-height:0;}
+  .banner{display:block; width:100%; height:200px; object-fit:cover; object-position:center;}
   .sub{color:var(--text-muted); font-size:var(--text-sm); margin:var(--space-1) 0 var(--space-6);}
   .mono{font-variant-numeric:tabular-nums;}
 
@@ -33,29 +39,28 @@
 
   /* six-reel draft board (player token per category) */
   .reels{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3); margin-bottom:var(--space-3);}
-  @media(max-width:640px){ .reels{grid-template-columns:repeat(2,1fr);} }
-  .reel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-3); text-align:center;
-    display:flex; flex-direction:column; align-items:center; gap:var(--space-2); position:relative; min-height:196px;
+  /* mobile: one reel per row — full-width, rectangular cards (see the horizontal layout below) */
+  @media(max-width:720px){ .reels{grid-template-columns:1fr; gap:var(--space-2);} }
+  .reel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-4) var(--space-3); text-align:center;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--space-2); position:relative; min-height:172px;
     transition:transform .14s, border-color .14s, box-shadow .14s;}
   .reel .cat{font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.07em; font-weight:var(--weight-medium);}
   .reel .tok{width:64px; height:64px; border-radius:var(--radius-pill); overflow:hidden; border:1px solid var(--border);
     background:var(--surface-raised); display:block;}
   .reel .pnm{font-size:var(--text-xs); font-weight:var(--weight-medium); line-height:1.15; min-height:28px; display:flex; align-items:center;}
   .reel .val{font-variant-numeric:tabular-nums; font-size:var(--text-xl); font-weight:var(--weight-medium); line-height:1;}
-  .reel .lockbtn{font-size:var(--text-xs); font-weight:var(--weight-medium); padding:var(--space-2) var(--space-3); background:var(--color-primary); color:var(--green-on); border-radius:var(--radius-sm); width:100%;}
-  .reel .lockbtn:disabled{opacity:.4; cursor:default;}
   .reel.pickable{cursor:pointer;}
   .reel.pickable:hover{border-color:var(--green); transform:translateY(-2px); box-shadow:0 8px 20px -10px color-mix(in srgb, var(--green) 45%, transparent);}
-  .reel.pickable:hover .lockbtn{background:var(--green-hover);}
-  /* locked state: attribute chosen, reel frozen (surface stays neutral — green signals the pick) */
+  .reel.pickable:focus-visible{outline:2px solid var(--green); outline-offset:2px;}
+  /* locked state: attribute chosen, reel frozen (surface stays neutral — the green ✓ signals the pick) */
   .reel.locked{border-color:var(--green-deep); background:var(--surface);}
-  .reel.locked .lockbtn{background:var(--surface-raised); color:var(--green); border:1px solid var(--green-deep);}
-  .reel.locked .src{font-size:var(--text-xs); color:var(--green); font-weight:var(--weight-medium);}
-  .reel .src{min-height:15px;}
-  /* Wimbledon pedigree pill: purple tag for deep runs; gold for champions (champion state only) */
+  .reel.locked .cat{color:var(--green);}
+  .reel.locked .cat::before{content:'✓ '; font-weight:var(--weight-medium);}
+  /* Wimbledon pedigree pill: neutral for deep runs, silver for finalists, gold for champions (medal hierarchy) */
   .reel .ped{font-size:var(--text-xs); font-weight:var(--weight-medium); padding:1px var(--space-2); border-radius:var(--radius-pill);
     line-height:1.4; letter-spacing:.02em; white-space:nowrap; border:1px solid transparent;}
-  .reel .ped.run{background:var(--purple-deep); color:var(--purple-on);}
+  .reel .ped.run{background:var(--surface-raised); color:var(--text-muted); border-color:var(--border);}
+  .reel .ped.finalist{background:color-mix(in srgb, var(--silver) 16%, transparent); color:var(--silver); border-color:color-mix(in srgb, var(--silver) 55%, transparent);}
   .reel .ped.champ{background:color-mix(in srgb, var(--gold) 20%, transparent); color:var(--gold); border-color:var(--gold);}
   .reel .ped.none{visibility:hidden;}
   /* spinning reels: legends roll past, then each drops into place and settles */
@@ -64,13 +69,40 @@
   .reel.spinning .tok svg{animation:reeldrop .17s linear;}
   .reel.spinning .pnm .roll,.reel.spinning .val .roll{display:inline-block; animation:reeldrop .17s linear;}
   @keyframes reeldrop{0%{transform:translateY(-105%); opacity:.12; filter:blur(1.5px);}65%{opacity:1;}100%{transform:translateY(0); opacity:1; filter:blur(0);}}
-  .reel.spinning .lockbtn{opacity:.5;}
   .reel.landed{animation:reelland .42s cubic-bezier(.2,.85,.3,1.35);}
   @keyframes reelland{0%{transform:translateY(-4px) scale(.94);}55%{transform:translateY(0) scale(1.04);}100%{transform:none;}}
 
   /* licence-clean player token (silhouette + country + initials) */
   .tok svg{display:block; width:100%; height:100%;}
   .tok .mono{font-variant-numeric:tabular-nums; font-weight:var(--weight-medium);}
+
+  /* mobile: each reel becomes a wide, rectangular card — token · info · big value */
+  @media(max-width:720px){
+    .reel{
+      display:grid; grid-template-columns:auto 1fr auto;
+      grid-template-areas:
+        "tok cat val"
+        "tok pnm val"
+        "tok ped val";
+      column-gap:var(--space-4); row-gap:2px; align-items:center;
+      text-align:left; min-height:0; padding:var(--space-3) var(--space-4);
+    }
+    .reel .cat{ grid-area:cat; align-self:end; }
+    .reel .tok{ grid-area:tok; width:58px; height:58px; }
+    /* fixed 2-line name box: reels stay the same height whatever legend flashes past,
+       so the spin animation no longer makes the cards jump around on mobile */
+    .reel .pnm{ grid-area:pnm; height:2.4em; min-height:0; overflow:hidden; justify-content:flex-start; font-size:var(--text-sm); }
+    .reel .ped{ grid-area:ped; justify-self:start; align-self:start; }
+    .reel .val{ grid-area:val; font-size:var(--text-2xl); text-align:right; }
+
+    /* respin controls stack: full-width button, locked-count centred underneath.
+       The "respins left" text is dropped here — the button already shows that count.
+       (.panel prefix lifts specificity above the base .row/.spins defined later in the file.) */
+    .panel .row{ flex-direction:column; align-items:center; gap:var(--space-2); }
+    .panel .row .spin{ width:100%; }
+    .panel .row .spins{ margin-left:0; }
+    .panel .row .spins .respin-count{ display:none; }
+  }
 
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-4);}
   .row{display:flex; align-items:center; justify-content:space-between; gap:var(--space-3);}
@@ -162,6 +194,10 @@
     opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s ease; }
   .stage.show{ opacity:1; visibility:visible; }
   .stage-inner{ display:flex; flex-direction:column; align-items:center; gap:var(--space-4); width:100%; max-height:100%; }
+  /* finish phase: the whole screen scrolls so the card, result, controls + "play more" fit any height.
+     margin:auto centres the block when it fits and lets you scroll from the top when it doesn't. */
+  .stage.finished{ overflow-y:auto; overflow-x:hidden; }
+  .stage.finished .stage-inner{ max-height:none; margin:auto; padding-bottom:var(--space-6); }
 
   /* zoom wrapper carries the "blow-up during sim → shrink to reveal a card" transform + 3D perspective.
      translateY recentres the blown-up card (its resting spot sits high, above the finish controls). */
@@ -171,8 +207,9 @@
   .card-inner{ position:absolute; inset:0; transform-style:preserve-3d; transition:transform .95s cubic-bezier(.2,.7,.2,1); }
   .card.flipped .card-inner{ transform:rotateY(180deg); }
   .card.flippable{ cursor:pointer; }
+  /* thick purple frame = the Top Trumps look (purple is an allowed border/UI colour) */
   .card-face{ position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
-    border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface);
+    border-radius:var(--radius-md); border:var(--space-2) solid var(--color-accent); background:var(--surface);
     display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 60px -24px rgba(0,0,0,.8); }
   .card-back{ transform:rotateY(0deg); }        /* shown first — the simulation */
   .card-front{ transform:rotateY(180deg); }     /* revealed by the flip — the Top Trumps stats */
@@ -181,8 +218,7 @@
   .cb-head{ padding:var(--space-3) var(--space-4) var(--space-2); border-bottom:1px solid var(--border); text-align:center; }
   .cb-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-lg); }
   .cb-sub{ font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
-  .cb-run{ flex:1; overflow-y:auto; padding:var(--space-3) var(--space-3) var(--space-4); }
-  .cb-run::-webkit-scrollbar{ width:6px; } .cb-run::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:var(--radius-pill); }
+  .cb-run{ flex:1; overflow:hidden; padding:var(--space-3) var(--space-3) var(--space-4); }
   /* compact, fixed-width rows so revealing set chips never reflow the round labels */
   .cb-run .round{ gap:var(--space-2); padding:var(--space-2) var(--space-3); }
   .cb-run .round .rd{ width:28px; }
@@ -199,7 +235,8 @@
   .tt-emblem svg{ width:100%; height:100%; display:block; }
   .tt-badge{ position:absolute; bottom:var(--space-2); left:50%; transform:translateX(-50%); white-space:nowrap;
     font-size:var(--text-xs); font-weight:var(--weight-medium); padding:2px var(--space-3); border-radius:var(--radius-pill); border:1px solid transparent; }
-  .tt-badge.run{ background:var(--purple-deep); color:var(--purple-on); }
+  .tt-badge.run{ background:var(--surface-raised); color:var(--text-muted); border-color:var(--border); }
+  .tt-badge.finalist{ background:color-mix(in srgb, var(--silver) 16%, transparent); color:var(--silver); border-color:color-mix(in srgb, var(--silver) 55%, transparent); }
   .tt-badge.champ{ background:color-mix(in srgb, var(--gold) 22%, transparent); color:var(--gold); border-color:var(--gold); }
   /* name banner — the Top Trumps signature (purple UI heading bar, not a tinted content surface) */
   .tt-banner{ background:var(--purple-deep); color:var(--purple-on); text-align:center;
@@ -228,9 +265,34 @@
   .finish-controls{ display:flex; flex-direction:column; align-items:center; gap:var(--space-3); width:min(86vw,360px);
     opacity:0; transform:translateY(10px); transition:opacity .5s ease, transform .5s ease; pointer-events:none; }
   .finish-controls.show{ opacity:1; transform:none; pointer-events:auto; }
+  /* result headline lives here now (below the flipped card), not on the card itself */
+  .finish-verdict{ width:100%; text-align:center; }
+  .finish-verdict:empty{ display:none; }
+  .finish-verdict .verdict{ margin:0; }
   .finish-controls .spin{ width:100%; }
   .finish-controls .copybtn{ width:100%; text-align:center; }
   .flip-hint{ font-size:var(--text-xs); color:var(--text-faint); }
+
+  /* "Play more" — cross-promo link cards to sibling games (accent = link colour; surfaces stay neutral) */
+  .playmore{ width:100%; margin-top:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3); }
+  .playmore-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-xl);
+    text-align:center; margin:0 0 var(--space-1); color:var(--text); }
+  .pm-card{ display:flex; align-items:center; gap:var(--space-4); text-decoration:none; color:inherit;
+    background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:var(--space-3) var(--space-4); transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+  .pm-card:hover{ transform:translateY(-2px); }
+  .pm-card:active{ transform:translateY(0); }
+  .pm-icon{ flex:0 0 auto; width:52px; height:52px; border-radius:var(--radius-sm);
+    display:flex; align-items:center; justify-content:center; }
+  .pm-icon svg{ width:62%; height:62%; display:block; }
+  .pm-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .pm-name{ font-weight:var(--weight-medium); font-size:var(--text-base); color:var(--text); line-height:1.25; }
+  .pm-desc{ font-size:var(--text-sm); color:var(--text-muted); line-height:1.3; }
+  /* each game keeps its own accent on the icon tile only */
+  .pm-green .pm-icon{ background:color-mix(in srgb, var(--green) 20%, var(--surface-raised)); color:var(--green); }
+  .pm-green:hover{ border-color:var(--green); box-shadow:0 12px 26px -16px color-mix(in srgb, var(--green) 60%, transparent); }
+  .pm-purple .pm-icon{ background:color-mix(in srgb, var(--purple-deep) 45%, var(--surface-raised)); color:var(--purple); }
+  .pm-purple:hover{ border-color:var(--purple); box-shadow:0 12px 26px -16px color-mix(in srgb, var(--purple) 55%, transparent); }
 
   @media (prefers-reduced-motion: reduce){
     .stage, .card-zoom, .card-inner{ transition:none; }
@@ -240,8 +302,8 @@
 </style>
 </head>
 <body>
+<h1 class="title"><img class="banner" src="Banner.svg" width="768" height="200" alt="Build-a-Champion · Wimbledon" /></h1>
 <div class="wrap">
-  <h1>Build-a-Champion <span class="leaf">·</span> Wimbledon</h1>
   <div class="sub">Six reels, six shots. Each spin deals a different legend from 20 years of Wimbledon into every category. Pick one shot to lock it in and the reels re-deal automatically — you get three respins if you don't fancy the hand. Fill all six and you're straight into the draw.</div>
 
   <div class="panel" id="draftPanel">
@@ -258,11 +320,9 @@
   <div class="disclaimer" id="disclaimer">
     <strong>Unofficial fan project.</strong> Not affiliated with, endorsed by, or associated with the
     All England Lawn Tennis Club (AELTC), Wimbledon, the ATP, the WTA, or any player. Player names are used
-    for identification only; no player endorsement is implied. Ratings are an <em>editorial, data-informed
-    prototype</em> derived from historical match facts (results and scorelines) for entertainment — they are
-    approximations, not official statistics. Serve, return, forehand, backhand and net ratings are derived
-    from non-commercial data sources and are a development prototype pending data licensing before any
-    commercial release.
+    for identification only; no player endorsement is implied. All player ratings are
+    <em>editorially curated</em> for entertainment — an approximate, subjective interpretation of each
+    player's game, not official statistics.
   </div>
 </div>
 
@@ -288,18 +348,55 @@
       </div>
     </div>
     <div class="finish-controls" id="finishControls">
+      <div class="finish-verdict" id="finishVerdict"></div>
       <button class="copybtn" id="shareBtn">Share your card</button>
       <button class="spin" id="playAgainBtn">🎾 Play again</button>
       <div class="flip-hint">Tap the card to flip it over</div>
+      <section class="playmore" aria-label="More games to play">
+        <h2 class="playmore-title">Play more</h2>
+        <a class="pm-card pm-green" href="#" rel="noopener">
+          <span class="pm-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="4.2" fill="currentColor"/>
+              <circle cx="20" cy="9" r="4.2" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="31" cy="9" r="4.2" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="9" cy="20" r="4.2" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="20" cy="20" r="4.2" fill="currentColor"/>
+              <circle cx="31" cy="20" r="4.2" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="9" cy="31" r="4.2" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="20" cy="31" r="4.2" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="31" cy="31" r="4.2" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="pm-text">
+            <span class="pm-name">GuessWord</span>
+            <span class="pm-desc">Decipher in six attempts — or you're out</span>
+          </span>
+        </a>
+        <a class="pm-card pm-purple" href="#" rel="noopener">
+          <span class="pm-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M10 27 L17 14 L26 26 L31 12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="10" cy="27" r="3.3" fill="currentColor"/>
+              <circle cx="17" cy="14" r="3.3" fill="currentColor"/>
+              <circle cx="26" cy="26" r="3.3" fill="currentColor"/>
+              <circle cx="31" cy="12" r="3.3" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="pm-text">
+            <span class="pm-name">Colour Connect</span>
+            <span class="pm-desc">Join the dots</span>
+          </span>
+        </a>
+      </section>
     </div>
   </div>
 </div>
 
 <script>
-// ============ THE DATA: 20 years of Wimbledon (2006-2018 ATP / 2006-2015 WTA) ============
-// Data-informed prototype produced by the wimbledon-ratings pipeline (see that project).
-// Ratings are derived from historical match facts; serve/ret/fh/bh/net use non-commercial
-// source data (prototype, pending licensing); con/clutch/stam/archetype/country are clean.
+// ============ THE DATA: two decades of Wimbledon (2006–2025) ============
+// Editorially curated player ratings — an editorial, entertainment-only interpretation of each
+// player's game (approximations, not official statistics). See wimbledon-ratings/ratings.csv.
 // keys: n=name, a=archetype, c=country(IOC), t=tour; serve,ret,fh,bh,net,con,clutch,stam (0-100)
 const ROSTER=[
   {n:"Alexander Zverev",a:"Return + Consistency",c:"GER",t:"atp",serve:60,ret:84,fh:68,bh:68,net:60,con:79,clutch:73,stam:51},
@@ -352,6 +449,14 @@ const ROSTER=[
   {n:"Steve Johnson",a:"Net + Return",c:"USA",t:"atp",serve:64,ret:65,fh:50,bh:45,net:71,con:49,clutch:63,stam:55},
   {n:"Tomas Berdych",a:"Forehand + Consistency",c:"CZE",t:"atp",serve:82,ret:72,fh:88,bh:75,net:63,con:85,clutch:72,stam:91},
   {n:"Tommy Haas",a:"Backhand + Consistency",c:"GER",t:"atp",serve:68,ret:54,fh:79,bh:85,net:59,con:82,clutch:69,stam:71},
+  // — Editorially curated recent additions (2019–2025 era) —
+  {n:"Jannik Sinner",a:"Backhand + Consistency",c:"ITA",t:"atp",serve:78,ret:89,fh:91,bh:93,net:68,con:92,clutch:88,stam:91},
+  {n:"Carlos Alcaraz",a:"All-court",c:"ESP",t:"atp",serve:80,ret:88,fh:94,bh:84,net:82,con:89,clutch:90,stam:90},
+  {n:"Taylor Fritz",a:"Serve + Forehand",c:"USA",t:"atp",serve:86,ret:60,fh:84,bh:72,net:66,con:79,clutch:78,stam:80},
+  {n:"Ben Shelton",a:"Serve + Forehand",c:"USA",t:"atp",serve:90,ret:55,fh:82,bh:66,net:68,con:72,clutch:74,stam:82},
+  {n:"Flavio Cobolli",a:"Forehand + Consistency",c:"ITA",t:"atp",serve:72,ret:68,fh:80,bh:74,net:60,con:76,clutch:76,stam:82},
+  {n:"Karen Khachanov",a:"Forehand + Serve",c:"RUS",t:"atp",serve:82,ret:62,fh:83,bh:72,net:62,con:79,clutch:75,stam:84},
+  {n:"Cameron Norrie",a:"Consistency + Return",c:"GBR",t:"atp",serve:74,ret:78,fh:76,bh:74,net:64,con:84,clutch:72,stam:88},
   {n:"Agnieszka Radwanska",a:"Forehand + Serve",c:"POL",t:"wta",serve:84,ret:84,fh:85,bh:76,net:66,con:83,clutch:57,stam:77},
   {n:"Ai Sugiyama",a:"All-court",c:"JPN",t:"wta",serve:53,ret:53,fh:59,bh:56,net:56,con:51,clutch:51,stam:48},
   {n:"Amelie Mauresmo",a:"Backhand + Consistency",c:"FRA",t:"wta",serve:81,ret:81,fh:80,bh:84,net:67,con:83,clutch:58,stam:81},
@@ -401,14 +506,23 @@ const ROSTER=[
   {n:"Venus Williams",a:"Serve + Return",c:"USA",t:"wta",serve:93,ret:93,fh:85,bh:81,net:76,con:93,clutch:64,stam:84},
   {n:"Vera Zvonareva",a:"Net + Forehand",c:"RUS",t:"wta",serve:77,ret:77,fh:79,bh:73,net:85,con:76,clutch:80,stam:88},
   {n:"Victoria Azarenka",a:"All-court",c:"BLR",t:"wta",serve:90,ret:90,fh:87,bh:87,net:82,con:87,clutch:66,stam:59},
-  {n:"Yanina Wickmayer",a:"Forehand + Backhand",c:"BEL",t:"wta",serve:61,ret:61,fh:68,bh:64,net:53,con:61,clutch:68,stam:57}
+  {n:"Yanina Wickmayer",a:"Forehand + Backhand",c:"BEL",t:"wta",serve:61,ret:61,fh:68,bh:64,net:53,con:61,clutch:68,stam:57},
+  // — Editorially curated recent additions (2016–2025 era) —
+  {n:"Iga Swiatek",a:"Forehand + Consistency",c:"POL",t:"wta",serve:85,ret:85,fh:92,bh:82,net:70,con:92,clutch:88,stam:90},
+  {n:"Aryna Sabalenka",a:"Forehand + Serve",c:"BLR",t:"wta",serve:88,ret:88,fh:90,bh:84,net:66,con:84,clutch:80,stam:84},
+  {n:"Amanda Anisimova",a:"Backhand + Forehand",c:"USA",t:"wta",serve:78,ret:78,fh:85,bh:86,net:60,con:78,clutch:74,stam:76},
+  {n:"Belinda Bencic",a:"All-court",c:"SUI",t:"wta",serve:80,ret:80,fh:82,bh:80,net:68,con:82,clutch:76,stam:78},
+  {n:"Mirra Andreeva",a:"Consistency + Backhand",c:"RUS",t:"wta",serve:78,ret:78,fh:80,bh:82,net:70,con:84,clutch:78,stam:84},
+  {n:"Liudmila Samsonova",a:"Forehand + Serve",c:"RUS",t:"wta",serve:80,ret:80,fh:83,bh:78,net:64,con:76,clutch:74,stam:76},
+  {n:"Anastasia Pavlyuchenkova",a:"Forehand + Backhand",c:"RUS",t:"wta",serve:76,ret:76,fh:82,bh:78,net:66,con:76,clutch:78,stam:74},
+  {n:"Laura Siegemund",a:"Net specialist",c:"GER",t:"wta",serve:64,ret:64,fh:66,bh:64,net:80,con:74,clutch:80,stam:80}
 ];
 const ATTRS=[{k:'serve',n:'Serve'},{k:'ret',n:'Return'},{k:'fh',n:'Forehand'},{k:'bh',n:'Backhand'},{k:'net',n:'Net'},{k:'con',n:'Consist.'}];
 
 // ===== Wimbledon pedigree bonus =====
-// Each legend's best real Wimbledon result within the ratings window (2006-2017 ATP / 2006-2014 WTA),
-// derived from historical match data. Going deep at SW19 earns a rating lift — the further they got,
-// the bigger the boost — so proven Wimbledon performers are premium picks on the reels.
+// Each player's best Wimbledon singles result (editorially curated). Going deep at SW19 earns a
+// rating lift — the further they got, the bigger the boost — so proven Wimbledon performers are
+// premium picks on the reels.
 const WIMB_BEST={
   // Champions
   "Roger Federer":"W","Rafael Nadal":"W","Novak Djokovic":"W","Andy Murray":"W",
@@ -436,7 +550,13 @@ const WIMB_BEST={
   "Roberto Bautista Agut":"R16","Steve Johnson":"R16","Ai Sugiyama":"R16","Anna Chakvetadze":"R16",
   "Carla Suarez Navarro":"R16","Caroline Wozniacki":"R16","Daniela Hantuchova":"R16","Elena Vesnina":"R16",
   "Flavia Pennetta":"R16","Jelena Jankovic":"R16","Melanie Oudin":"R16","Patty Schnyder":"R16","Roberta Vinci":"R16",
-  "Yanina Wickmayer":"R16"
+  "Yanina Wickmayer":"R16",
+  // — Editorially curated recent additions —
+  "Jannik Sinner":"W","Carlos Alcaraz":"W","Iga Swiatek":"W",
+  "Amanda Anisimova":"F",
+  "Taylor Fritz":"SF","Cameron Norrie":"SF","Aryna Sabalenka":"SF","Belinda Bencic":"SF",
+  "Ben Shelton":"QF","Flavio Cobolli":"QF","Karen Khachanov":"QF","Mirra Andreeva":"QF",
+  "Liudmila Samsonova":"QF","Anastasia Pavlyuchenkova":"QF","Laura Siegemund":"QF"
 };
 const WIMB_LABEL={W:'Champion',F:'Finalist',SF:'Semi-finalist',QF:'Quarter-finalist',R16:'Last 16'};
 const WIMB_BONUS={W:6,F:4,SF:3,QF:2,R16:1};   // rating points added to every attribute (capped at 100)
@@ -451,7 +571,7 @@ const WIMB_BONUS={W:6,F:4,SF:3,QF:2,R16:1};   // rating points added to every at
 
 // ===== config =====
 const GAME_VERSION='3.2.0';
-const RATINGS_VERSION='wimbledon-ratings-pipeline-v1';
+const RATINGS_VERSION='editorial-v1';
 const DAILY_RESPINS=3;      // manual re-rolls you may spend before committing; picks auto-advance the reels for free
 const PENALTY_BASE=55;      // defensive default for an unfilled slot (normal play always fills all six)
 const EPOCH=Date.UTC(2025,5,23); // Wimbledon 2025 fortnight (thematic daily numbering)
@@ -603,23 +723,23 @@ function renderReels(justKey, spinningSet, landedSet){
     const canLock = p && !r.locked && !allLocked() && !isSpinning;
     d.className='reel'+(r.locked?' locked':'')+(isSpinning?' spinning':'')+(isLanded?' landed':'')+(justKey===at.k?' just':'')+(canLock?' pickable':'');
     const val = p? p[at.k] : '—';
-    let btnLabel, btnDisabled;
-    if(r.locked){ btnLabel='✓ '+at.n+' locked'; btnDisabled=true; }
-    else if(isSpinning){ btnLabel='Spinning…'; btnDisabled=true; }
-    else if(!p){ btnLabel='Spin to deal'; btnDisabled=true; }
-    else { btnLabel='Pick '+at.n; btnDisabled=false; }
-    const showPed = p && p.wimb && !isSpinning;
+    const showPed = p && p.wimb;                     // badge shows during the spin too (updated per flash)
     const pedHTML = showPed
-      ? `<div class="ped ${p.wimb==='W'?'champ':'run'}">${p.wimb==='W'?'🏆 ':''}${WIMB_LABEL[p.wimb]}</div>`
+      ? `<div class="ped ${p.wimb==='W'?'champ':p.wimb==='F'?'finalist':'run'}">${p.wimb==='W'?'🏆 ':''}${WIMB_LABEL[p.wimb]}</div>`
       : `<div class="ped none">·</div>`;
     d.innerHTML=`<div class="cat">${at.n}</div>
       <div class="tok">${tokenSVG(p)}</div>
       <div class="pnm">${p? p.n : '—'}</div>
       ${pedHTML}
-      <div class="val">${val}</div>
-      <div class="src">${r.locked? ('from '+p.n) : ''}</div>
-      <button class="lockbtn" ${btnDisabled?'disabled':''}>${btnLabel}</button>`;
-    if(canLock){ d.addEventListener('click',()=>lockReel(i)); }
+      <div class="val">${val}</div>`;
+    if(canLock){
+      d.setAttribute('role','button'); d.setAttribute('tabindex','0');
+      d.setAttribute('aria-label','Pick '+at.n+': '+p.n+', rated '+val);
+      d.addEventListener('click',()=>lockReel(i));
+      d.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); lockReel(i); } });
+    } else if(r.locked){
+      d.setAttribute('aria-label',at.n+' locked: '+p.n);
+    }
     host.appendChild(d);
   });
   refreshControls();
@@ -629,7 +749,7 @@ function refreshControls(){
   const noRespins=respinsLeft<=0;
   $('spinBtn').disabled = animating || noRespins || allLocked();
   $('spinBtn').textContent = noRespins? 'No respins left' : ('🎾 Respin · '+respinsLeft+' left');
-  $('spinsLeft').innerHTML=`<b>${respinsLeft}</b> respins left · <b>${lockedCount}</b>/6 locked`;
+  $('spinsLeft').innerHTML=`<span class="respin-count"><b>${respinsLeft}</b> respins left · </span><b>${lockedCount}</b>/6 locked`;
   renderXfac();
 }
 function renderXfac(){
@@ -654,16 +774,24 @@ function startSpin(spinningSet, justKey, onDone){
   let remaining=idxs.length;
   idxs.forEach((idx,pos)=>{
     const card=host.children[idx];
-    const tok=card.querySelector('.tok'), pnm=card.querySelector('.pnm'), val=card.querySelector('.val');
+    const tok=card.querySelector('.tok'), pnm=card.querySelector('.pnm'), val=card.querySelector('.val'), ped=card.querySelector('.ped');
     const attrKey=reels[idx].key, finalPlayer=reels[idx].player;
-    const dur=560+pos*200;                           // staggered stop time (left→right)
+    const setPed=pl=>{                               // reflect the flashed/landed player's Wimbledon pedigree badge
+      if(!ped) return;
+      if(pl&&pl.wimb){ ped.className='ped '+(pl.wimb==='W'?'champ':pl.wimb==='F'?'finalist':'run'); ped.textContent=(pl.wimb==='W'?'🏆 ':'')+WIMB_LABEL[pl.wimb]; }
+      else { ped.className='ped none'; ped.textContent='·'; }
+    };
+    const dur=780+pos*185;                           // staggered stop time (left→right); longer wind-down
+    const SETTLE=220;                                // final ms resting ON the dealt option before the landing pop
     const stopAt=performance.now()+dur;
+    let resting=false;
     const tick=()=>{
       const remain=stopAt-performance.now();
       if(remain<=0){                                 // land on the dealt player
         tok.innerHTML=tokenSVG(finalPlayer);
         pnm.textContent=finalPlayer.n;
         val.textContent=finalPlayer[attrKey];
+        setPed(finalPlayer);
         card.classList.remove('spinning');
         if(--remaining===0){                         // whole board settled → restore interactivity + pop
           animating=false;
@@ -672,12 +800,23 @@ function startSpin(spinningSet, justKey, onDone){
         }
         return;
       }
-      const rp=ROSTER[Math.floor(Math.random()*ROSTER.length)]; // flash a random legend
-      tok.innerHTML=tokenSVG(rp);
-      pnm.innerHTML='<span class="roll">'+rp.n+'</span>';
-      val.innerHTML='<span class="roll">'+rp[attrKey]+'</span>';
-      const t=1-remain/dur;                          // 0→1 progress: slow down as we approach the stop
-      setTimeout(tick, 40+t*t*135);                  // ~40ms fast → ~175ms just before landing
+      if(remain<=SETTLE){                            // ease onto the ACTUAL option: it drops in once, then rests
+        if(!resting){
+          resting=true;
+          tok.innerHTML=tokenSVG(finalPlayer);
+          pnm.innerHTML='<span class="roll">'+finalPlayer.n+'</span>';
+          val.innerHTML='<span class="roll">'+finalPlayer[attrKey]+'</span>';
+          setPed(finalPlayer);
+        }
+      } else {                                       // flash a random legend (name, value + pedigree badge roll past)
+        const rp=ROSTER[Math.floor(Math.random()*ROSTER.length)];
+        tok.innerHTML=tokenSVG(rp);
+        pnm.innerHTML='<span class="roll">'+rp.n+'</span>';
+        val.innerHTML='<span class="roll">'+rp[attrKey]+'</span>';
+        setPed(rp);
+      }
+      const t=1-remain/dur;                          // 0→1 progress: cubic ease so it slows right down at the end
+      setTimeout(tick, 36+Math.pow(t,3)*300);        // ~36ms fast → ~336ms as it settles (less jarring landing)
     };
     tick();
   });
@@ -748,7 +887,9 @@ function buildCardFront(champ, play){
   const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
   const badge = play.won
     ? `<div class="tt-badge champ">🏆 Champion</div>`
-    : `<div class="tt-badge run">${cap(RD_NAME[play.reached])}</div>`;
+    : play.reached==='F'
+      ? `<div class="tt-badge finalist">Finalist</div>`
+      : `<div class="tt-badge run">${cap(RD_NAME[play.reached])}</div>`;
   const statRows=ATTRS.map((at,i)=>{
     const v=Math.round(champ[at.k]);
     const src=source[at.k]? 'from '+lastName(source[at.k]) : '';
@@ -786,6 +927,13 @@ function startFrontReveal(){
   const tt=$('ttFront'); tt.classList.add('reveal');           // rows slide in + bars grow (CSS)
   tt.querySelectorAll('[data-count]').forEach(el=>animateCount(el, +el.getAttribute('data-count'), 900));
 }
+// The result headline (champion / beaten + score + title odds) now lives on the finish screen.
+function renderFinishVerdict(){
+  const play=lastPlay; if(!play) return;
+  $('finishVerdict').innerHTML = play.won
+    ? `<div class="verdict title">🏆 Wimbledon Champion</div><div class="verdict-sub">Score ${play.score} · title odds ${(play.titleOdds*100).toFixed(1)}%</div>`
+    : `<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div><div class="verdict-sub">Score ${play.score} · title odds going in ${(play.titleOdds*100).toFixed(1)}%</div>`;
+}
 
 // Enter Phase 2: show the stage, blow the card up (back facing) so the sim feels full-screen, play it, then reveal.
 function startSimulation(){
@@ -802,6 +950,7 @@ function startSimulation(){
 
   const stage=$('stage'), zoom=$('cardZoom'), card=$('card');
   card.classList.remove('flipped','flippable');
+  stage.classList.remove('finished');
   $('finishControls').classList.remove('show');
   $('ttFront').classList.remove('reveal');
 
@@ -839,7 +988,9 @@ function revealCard(){
     setTimeout(()=>{
       if(runToken!==cardToken) return;
       card.classList.add('flippable');                         // now clickable to flip front⇄back
+      const st=$('stage'); st.classList.add('finished'); st.scrollTop=0;  // finish screen now scrolls (card + controls + play more)
       $('finishControls').classList.add('show');
+      renderFinishVerdict();                                   // result headline appears with the finish screen
       startFrontReveal();
     }, prefersReducedMotion?0:520);
   };
@@ -897,7 +1048,7 @@ function renderRun(host,play,onDone){
   host.innerHTML='';
   const myToken=runToken;                       // abort if a new game starts mid-reveal
   const stale=()=>myToken!==runToken;
-  const done=()=>{ if(stale())return; showVerdict(); onDone&&onDone(); };
+  const done=()=>{ if(stale())return; onDone&&onDone(); };   // verdict now shows on the finish screen
 
   if(prefersReducedMotion){                      // no animation: render the whole run at once
     play.rounds.forEach((r,i)=>host.appendChild(buildRow(r,i,true)));
@@ -951,15 +1102,6 @@ function renderRun(host,play,onDone){
       <div class="sets">${setsHTML}</div>`;
     return div;
   }
-  function showVerdict(){
-    const v=document.createElement('div');
-    if(play.won){
-      v.innerHTML=`<div class="verdict title">🏆 WIMBLEDON CHAMPION</div><div class="verdict-sub">Score ${play.score} · pre-tournament title odds ${(play.titleOdds*100).toFixed(1)}%</div>`;
-    }else{
-      v.innerHTML=`<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div><div class="verdict-sub">Score ${play.score} · title odds going in ${(play.titleOdds*100).toFixed(1)}%</div>`;
-    }
-    host.appendChild(v);
-  }
 }
 function archetypeName(a){
   const entries=[['Cannon',a.serve],['Wall',a.ret],['Hammer',a.fh],['Blade',a.bh],['Net Rusher',a.net],['Metronome',a.con]];
@@ -1002,15 +1144,17 @@ async function renderCardImage(){
   const cs=getComputedStyle(document.documentElement), T=k=>cs.getPropertyValue(k).trim();
   const P={ canvas:T('--canvas'), surface:T('--surface'), raised:T('--surface-raised'), border:T('--border'),
     text:T('--text'), muted:T('--text-muted'), faint:T('--text-faint'), greenOn:T('--green-on'),
-    green:T('--green'), purpleDeep:T('--purple-deep'), purpleOn:T('--purple-on'), gold:T('--gold') };
+    green:T('--green'), purple:T('--purple'), purpleDeep:T('--purple-deep'), purpleOn:T('--purple-on'), gold:T('--gold'), silver:T('--silver') };
   const champ=lastChamp, play=lastPlay, won=play.won;
   const W=720, H=1120, pad=48;
   const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
   const x=canvas.getContext('2d');
   x.fillStyle=P.canvas; x.fillRect(0,0,W,H);
-  const inset=12, radius=26, cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  // thick purple Top Trumps frame, then the content clipped to the inner rounded rect
+  const margin=12, frame=16, inset=margin+frame, radius=28, cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  roundRectPath(x,margin,margin,W-margin*2,H-margin*2,radius); x.fillStyle=P.purple; x.fill();
   x.save();
-  roundRectPath(x,inset,inset,W-inset*2,H-inset*2,radius); x.clip();
+  roundRectPath(x,inset,inset,W-inset*2,H-inset*2,radius-frame*0.6); x.clip();
   x.fillStyle=P.surface; x.fillRect(inset,inset,W-inset*2,H-inset*2);
 
   // photo area + composite emblem (gold ring + star for a champion, else green)
@@ -1022,11 +1166,16 @@ async function renderCardImage(){
   x.beginPath(); x.arc(ecx,ecy-er*0.14,er*0.42,0,7); x.fill();
   x.beginPath(); x.ellipse(ecx,ecy+er*0.78,er*0.62,er*0.52,0,0,7); x.fill(); x.restore();
   if(won) drawStar(x,ecx,ecy-er*0.5,5,er*0.2,er*0.09,P.gold);
-  // result badge chip over the photo
-  const bt=won?'Champion':cap(RD_NAME[play.reached]);
-  x.font='500 22px Inter'; const bw=x.measureText(bt).width+34, bh=38, by=inset+photoH-bh-16;
-  roundRectPath(x,W/2-bw/2,by,bw,bh,bh/2); x.fillStyle=won?P.gold:P.purpleDeep; x.fill();
-  x.fillStyle=won?P.greenOn:P.purpleOn; x.textAlign='center'; x.textBaseline='middle'; x.fillText(bt,W/2,by+bh/2+1);
+  // result badge chip over the photo (medal hierarchy: gold champion · silver finalist · neutral round)
+  const isFinalist = !won && play.reached==='F';
+  const bt = won?'Champion' : (isFinalist?'Finalist':cap(RD_NAME[play.reached]));
+  const badgeCol = won?P.gold : (isFinalist?P.silver:P.muted);
+  x.font='500 22px Inter'; const bw=x.measureText(bt).width+40, bh=40, bx=W/2-bw/2, by=inset+photoH-bh-16;
+  roundRectPath(x,bx,by,bw,bh,bh/2);
+  if(won||isFinalist){ x.save(); x.globalAlpha=won?0.22:0.16; x.fillStyle=badgeCol; x.fill(); x.restore(); }
+  else { x.fillStyle=P.raised; x.fill(); }
+  roundRectPath(x,bx,by,bw,bh,bh/2); x.lineWidth=1.5; x.strokeStyle = won?P.gold : (isFinalist?P.silver:P.border); x.stroke();
+  x.fillStyle=badgeCol; x.textAlign='center'; x.textBaseline='middle'; x.fillText(bt,W/2,by+bh/2+1);
 
   // purple name banner (Top Trumps signature)
   let y=inset+photoH; const bannerH=66;
@@ -1060,7 +1209,6 @@ async function renderCardImage(){
     x.fillText(String(r.v),W-pad,cy);
   });
   x.restore();
-  roundRectPath(x,inset,inset,W-inset*2,H-inset*2,radius); x.lineWidth=2; x.strokeStyle=P.border; x.stroke();
   x.textAlign='left'; x.textBaseline='alphabetic';
   return canvas;
 }
@@ -1114,13 +1262,13 @@ function startGame(){
   for(const k in build) build[k]=null; for(const k in source) delete source[k];
   reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
   pickedSources=[]; dealCount=0; respinsLeft=DAILY_RESPINS;
-  const stage=$('stage'); stage.classList.remove('show'); stage.setAttribute('aria-hidden','true');
+  const stage=$('stage'); stage.classList.remove('show','finished'); stage.setAttribute('aria-hidden','true');
   document.body.classList.remove('locked');
   $('card').classList.remove('flipped','flippable');
   $('cardZoom').style.setProperty('--card-scale','1');
   $('finishControls').classList.remove('show');
   $('ttFront').classList.remove('reveal');
-  $('simRun').innerHTML=''; $('ttFront').innerHTML='';
+  $('simRun').innerHTML=''; $('ttFront').innerHTML=''; $('finishVerdict').innerHTML='';
   currentSeed='free-'+Date.now()+'-'+Math.floor(Math.random()*1e9);
   $('draftPanel').style.display='block';
   dealReels(0);                        // first deal is free — reels roll in on load

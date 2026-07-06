@@ -31,6 +31,7 @@
 
   /* --- Optional heritage gold (use sparingly, or delete) ----------------- */
   --gold:            #E6C566;   /* champion / streak states only */
+  --silver:          #C4C9D4;   /* finalist pedigree pill only */
 
   /* --- Win / loss result states (match & set outcomes ONLY) -------------- */
   --win:             var(--green);   /* a set / round you won */
