@@ -1,0 +1,66 @@
+# ---------------------------------------------------------------------------
+# Rating methodology weights. Every formula is a weighted blend of percentile-
+# ranked sub-metrics, then mapped onto the 40-98 envelope (see normalize).
+# Tune here without touching code. Weights per attribute should sum to ~1.0.
+# ---------------------------------------------------------------------------
+
+normalize:
+  floor: 40            # no rating below this (avoid extreme 0)
+  ceil: 98             # no rating above this (avoid extreme 100)
+  winsor_low: 0.02     # clip the bottom 2% of a reference distribution
+  winsor_high: 0.98    # clip the top 2% (stops one outlier dominating)
+
+elo:
+  k: 24                # Elo K-factor
+  init: 1500           # starting Elo for an unseen player
+  grass_blend: 0.65    # weight on grass-Elo vs overall-Elo where blended
+
+# ---- data-tier formulas (grounded in real grass stats) --------------------
+serve:                 # tier: data (NC-derived -> prototype-only)
+  ace_pct: 0.35
+  first_won_pct: 0.30
+  hold_pct: 0.25
+  second_won_pct: 0.10
+
+return:                # tier: data (NC-derived -> prototype-only)
+  ret_pts_won_pct: 0.50
+  break_pct: 0.35
+  first_ret_won_pct: 0.15
+
+net_volley:            # tier: data where charted, else model
+  net_win_pct: 0.65
+  net_volume: 0.35
+
+consistency:           # tier: data (CLEAN - facts + in-house Elo)
+  rank_pctile: 0.40
+  elo_pctile: 0.35
+  grass_win_pct: 0.25
+
+# ---- temperament + endurance (CLEAN - parsed from match scores = facts) -----
+# clutch  = winning the decisive moments (tiebreaks + deciding sets).
+# stamina = enduring long matches + going deep + time on court (ATP minutes only).
+# Both are grass-only, within-tour percentile-ranked, and fall back to the
+# quality index when a player's grass sample is too thin to trust.
+clutch:                # tier: data (CLEAN)
+  tiebreak_win_pct: 0.50
+  decider_win_pct: 0.50
+
+stamina:               # tier: data (CLEAN)
+  long_match_win_pct: 0.50  # win% in 4-5 set (Bo5) / 3 set (Bo3) matches
+  deep_run: 0.30            # furthest Wimbledon round reached (facts)
+  avg_minutes: 0.20        # mean grass court-time (ATP only; WTA renormalises)
+
+# ---- model-tier formulas (no free per-wing metric exists) ------------------
+# Base comes from a quality index (peak Elo + peak ranking). Adjustments are
+# small, signed nudges in [-1,1] scaled by these weights * half the 40-98 span.
+# These attributes are ALWAYS auto-flagged for editorial review.
+forehand:
+  quality_index: 1.0
+  aggression_adj: 0.15   # ace%/winners signal -> aggressive forehand
+  mcp_fh_adj: 0.15       # charting forehand winners-minus-errors (if available)
+
+backhand:
+  quality_index: 1.0
+  return_strength_adj: 0.12
+  one_hander_adj: 0.08   # small prior nudge for one-handed backhands on grass
+  mcp_bh_adj: 0.15       # charting backhand winners-minus-errors (if available)
