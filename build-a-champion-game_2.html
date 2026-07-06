@@ -26,6 +26,28 @@
   .sub{color:var(--text-muted); font-size:var(--text-sm); margin:var(--space-1) 0 var(--space-6);}
   .mono{font-variant-numeric:tabular-nums;}
 
+  /* ===== tour toggle: pick ATP / WTA / Both before the game starts (segmented control) ===== */
+  .tour-toggle{display:flex; gap:var(--space-1); background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-md); padding:var(--space-1); margin-bottom:var(--space-3);}
+  .tour-opt{flex:1; background:transparent; color:var(--text-muted); font-family:var(--font-body);
+    font-weight:var(--weight-medium); font-size:var(--text-sm); padding:var(--space-2) var(--space-3);
+    border-radius:var(--radius-sm); transition:background .14s, color .14s;}
+  .tour-opt:hover:not(.active):not(:disabled){color:var(--text); background:var(--surface-raised);}
+  /* selected segment = the green active state (per design system) */
+  .tour-opt.active{background:var(--color-primary); color:var(--green-on);}
+  .tour-opt:disabled{cursor:default; opacity:.55;}
+  .tour-opt.active:disabled{opacity:.9;}
+  .tour-opt .bo{font-size:var(--text-xs); opacity:.85; margin-left:var(--space-1);}
+
+  /* ===== pre-start gate: the draft board sits blurred behind one "Start game" CTA ===== */
+  #draftPanel{position:relative;}
+  .draft-inner{transition:filter .3s ease;}
+  .draft-inner.blurred{filter:blur(7px); pointer-events:none; user-select:none;}
+  .start-overlay{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    border-radius:var(--radius-md); background:color-mix(in srgb, var(--canvas) 45%, transparent);
+    opacity:0; visibility:hidden; transition:opacity .3s ease, visibility .3s ease;}
+  .start-overlay.show{opacity:1; visibility:visible;}
+
   /* slot board */
   .board{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3); margin-bottom:var(--space-4);}
   @media(max-width:560px){ .board{grid-template-columns:repeat(2,1fr);} }
@@ -139,7 +161,7 @@
   .lev{flex:1; background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-3);}
   .lev .k{font-size:var(--text-xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em;}
   .lev .vv{font-variant-numeric:tabular-nums; font-size:var(--text-lg); font-weight:var(--weight-medium);}
-  .round{display:flex; align-items:center; gap:var(--space-3); background:var(--surface); border:1px solid var(--border);
+  .round{display:flex; flex-direction:column; gap:var(--space-2); background:var(--surface); border:1px solid var(--border);
     border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-2);
     transition:opacity .32s ease, transform .32s ease, border-color .3s ease, box-shadow .3s ease;}
   .round.win{border-color:var(--green-deep);} .round.loss{border-color:var(--border-strong);} .round.dnp{opacity:.3;}
@@ -147,10 +169,13 @@
   .round.appear.in{opacity:1; transform:none;}
   .round.dnp.appear.in{opacity:.3;}
   .round.active{border-color:var(--purple-deep); box-shadow:0 0 0 1px var(--purple-deep);} /* match in progress */
-  .round .rd{width:34px; font-variant-numeric:tabular-nums; font-size:var(--text-xs); color:var(--text-muted);}
-  .round .opp{flex:1; min-width:0;} .round .opp .nm{font-weight:var(--weight-medium); font-size:var(--text-sm);} .round .opp .ov{font-size:var(--text-xs); color:var(--text-muted);}
-  /* set-by-set score: one boxed chip per set, green if you won it, red if you lost it */
-  .round .sets{display:flex; gap:var(--space-2); justify-content:flex-end; flex-wrap:wrap; align-items:center; min-height:26px;}
+  /* head line: round label · opponent name · their overall (the overall sits right after the name) */
+  .round .head{display:flex; align-items:baseline; gap:var(--space-2); min-width:0;}
+  .round .head .rd{flex:0 0 auto; font-variant-numeric:tabular-nums; font-size:var(--text-xs); color:var(--text-muted);}
+  .round .head .nm{font-weight:var(--weight-medium); font-size:var(--text-sm); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .round .head .ov{flex:0 0 auto; font-size:var(--text-xs); color:var(--text-muted);}
+  /* set-by-set score sits underneath the head: one boxed chip per set, green if you won it, red if you lost it */
+  .round .sets{display:flex; gap:var(--space-2); justify-content:flex-start; flex-wrap:wrap; align-items:center; min-height:26px;}
   .round .sets .dash{color:var(--text-muted); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
   .set{font-variant-numeric:tabular-nums; font-size:var(--text-sm); font-weight:var(--weight-medium); line-height:1;
     padding:var(--space-1) var(--space-2); border-radius:var(--radius-sm); border:1px solid var(--border);
@@ -168,7 +193,6 @@
   .xfac{display:none; gap:var(--space-4); margin-top:var(--space-3); font-size:var(--text-sm); color:var(--text-muted);}
   .xfac .mtr{font-variant-numeric:tabular-nums; letter-spacing:1px; color:var(--color-accent);}
   .levers{flex-wrap:wrap;} .lev{min-width:88px;}
-  .round .rd .bo5{display:block; font-size:var(--text-xs); color:var(--color-accent); letter-spacing:.05em;}
   .spun{animation:fadein .22s ease;}
   .verdict{animation:fadein .3s ease;}
   @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
@@ -189,6 +213,18 @@
 
   /* ============ Phase 2/3: full-viewport stage + flippable Top Trumps card ============ */
   body.locked{ overflow:hidden; }
+
+  /* Draw intro: a brief loading beat shown between locking the 6th shot and the tournament. */
+  .draw-intro{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+    background:var(--canvas); padding:var(--space-6) var(--space-4);
+    opacity:0; visibility:hidden; transition:opacity .3s ease, visibility .3s ease; }
+  .draw-intro.show{ opacity:1; visibility:visible; }
+  .draw-intro-inner{ display:flex; flex-direction:column; align-items:center; gap:var(--space-3); text-align:center; }
+  .draw-ball{ width:44px; height:44px; animation:drawBounce 1s cubic-bezier(.3,.05,.4,1) infinite; }
+  .draw-ball svg{ display:block; width:100%; height:100%; }
+  .draw-intro-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-xl); }
+  .draw-intro-sub{ font-size:var(--text-sm); color:var(--text-muted); }
+  @keyframes drawBounce{ 0%,100%{ transform:translateY(-8px); } 50%{ transform:translateY(8px); } }
   .stage{ position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center;
     background:var(--canvas); padding:var(--space-6) var(--space-4);
     opacity:0; visibility:hidden; transition:opacity .45s ease, visibility .45s ease; }
@@ -220,11 +256,9 @@
   .cb-sub{ font-size:var(--text-xs); color:var(--text-muted); margin-top:2px; }
   .cb-run{ flex:1; overflow:hidden; padding:var(--space-3) var(--space-3) var(--space-4); }
   /* compact, fixed-width rows so revealing set chips never reflow the round labels */
-  .cb-run .round{ gap:var(--space-2); padding:var(--space-2) var(--space-3); }
-  .cb-run .round .rd{ width:28px; }
-  .cb-run .round .opp{ min-width:0; }
-  .cb-run .round .opp .nm{ font-size:var(--text-xs); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .cb-run .round .sets{ flex:0 0 150px; justify-content:flex-start; flex-wrap:nowrap; gap:var(--space-1); min-height:22px; }
+  .cb-run .round{ gap:var(--space-1); padding:var(--space-2) var(--space-3); }
+  .cb-run .round .head .nm{ font-size:var(--text-xs); }
+  .cb-run .round .sets{ justify-content:flex-start; flex-wrap:wrap; gap:var(--space-1); min-height:22px; }
   .cb-run .set{ min-width:26px; font-size:var(--text-xs); padding:2px var(--space-1); }
 
   /* --- card front: Top Trumps (portrait · purple name banner · striped stat rows) --- */
@@ -238,6 +272,11 @@
   .tt-badge.run{ background:var(--surface-raised); color:var(--text-muted); border-color:var(--border); }
   .tt-badge.finalist{ background:color-mix(in srgb, var(--silver) 16%, transparent); color:var(--silver); border-color:color-mix(in srgb, var(--silver) 55%, transparent); }
   .tt-badge.champ{ background:color-mix(in srgb, var(--gold) 22%, transparent); color:var(--gold); border-color:var(--gold); }
+  /* tour tag (top-left of the card) — which field you built in: ATP / WTA / Both (purple UI pill) */
+  .tt-tour{ position:absolute; top:var(--space-2); left:var(--space-2); z-index:1;
+    font-size:var(--text-xs); font-weight:var(--weight-medium); letter-spacing:.05em;
+    padding:2px var(--space-2); border-radius:var(--radius-pill);
+    background:var(--purple-deep); color:var(--purple-on); }
   /* name banner — the Top Trumps signature (purple UI heading bar, not a tinted content surface) */
   .tt-banner{ background:var(--purple-deep); color:var(--purple-on); text-align:center;
     font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-lg); line-height:1.15; padding:var(--space-2) var(--space-3); }
@@ -271,7 +310,10 @@
   .finish-verdict .verdict{ margin:0; }
   .finish-controls .spin{ width:100%; }
   .finish-controls .copybtn{ width:100%; text-align:center; }
-  .flip-hint{ font-size:var(--text-xs); color:var(--text-faint); }
+  /* tournament recap — the round-by-round run, shown statically beneath "Play again" */
+  .recap{ width:100%; margin-top:var(--space-2); }
+  .recap-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-lg);
+    text-align:center; margin:0 0 var(--space-3); color:var(--text); }
 
   /* "Play more" — cross-promo link cards to sibling games (accent = link colour; surfaces stay neutral) */
   .playmore{ width:100%; margin-top:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3); }
@@ -298,6 +340,8 @@
     .stage, .card-zoom, .card-inner{ transition:none; }
     .tt-row{ opacity:1; transform:none; }
     .tt.reveal .tt-row{ animation:none; }
+    .draw-intro{ transition:none; }
+    .draw-ball{ animation:none; }
   }
 </style>
 </head>
@@ -306,13 +350,25 @@
 <div class="wrap">
   <div class="sub">Six reels, six shots. Each spin deals a different legend from 20 years of Wimbledon into every category. Pick one shot to lock it in and the reels re-deal automatically — you get three respins if you don't fancy the hand. Fill all six and you're straight into the draw.</div>
 
+  <!-- Tour toggle: choose the field before starting. WTA plays best-of-three; ATP & Both best-of-five. -->
+  <div class="tour-toggle" id="tourToggle" role="group" aria-label="Choose tour">
+    <button type="button" class="tour-opt active" data-tour="atp" aria-pressed="true">ATP<span class="bo">Bo5</span></button>
+    <button type="button" class="tour-opt" data-tour="wta" aria-pressed="false">WTA<span class="bo">Bo3</span></button>
+    <button type="button" class="tour-opt" data-tour="both" aria-pressed="false">Both<span class="bo">Bo5</span></button>
+  </div>
+
   <div class="panel" id="draftPanel">
-    <div class="reels" id="reels"></div>
-    <div class="row">
-      <button class="spin" id="spinBtn">🎾 Spin the reels</button>
-      <div class="spins" id="spinsLeft"></div>
+    <div class="draft-inner" id="draftInner">
+      <div class="reels" id="reels"></div>
+      <div class="row">
+        <button class="spin" id="spinBtn">🎾 Spin the reels</button>
+        <div class="spins" id="spinsLeft"></div>
+      </div>
+      <div class="xfac" id="xfac"></div>
     </div>
-    <div class="xfac" id="xfac"></div>
+    <div class="start-overlay" id="startOverlay">
+      <button class="spin" id="startBtn">🎾 Start game</button>
+    </div>
   </div>
 
   <div class="consent" id="consent" style="display:none;"></div>
@@ -351,7 +407,7 @@
       <div class="finish-verdict" id="finishVerdict"></div>
       <button class="copybtn" id="shareBtn">Share your card</button>
       <button class="spin" id="playAgainBtn">🎾 Play again</button>
-      <div class="flip-hint">Tap the card to flip it over</div>
+      <div class="recap" id="recap" aria-label="Your tournament recap"></div>
       <section class="playmore" aria-label="More games to play">
         <h2 class="playmore-title">Play more</h2>
         <a class="pm-card pm-green" href="#" rel="noopener">
@@ -390,6 +446,20 @@
         </a>
       </section>
     </div>
+  </div>
+</div>
+
+<!-- Brief transition between locking the 6th shot and the tournament: a short "entering the draw" beat -->
+<div class="draw-intro" id="drawIntro" aria-hidden="true">
+  <div class="draw-intro-inner" role="status" aria-live="polite">
+    <div class="draw-ball" aria-hidden="true">
+      <svg viewBox="0 0 44 44" role="img" aria-label="">
+        <circle cx="22" cy="22" r="20" fill="var(--green)"/>
+        <path d="M4 15 A26 26 0 0 1 15 4 M40 15 A26 26 0 0 0 29 4" fill="none" stroke="var(--green-on)" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>
+      </svg>
+    </div>
+    <div class="draw-intro-title">Entering the draw</div>
+    <div class="draw-intro-sub">Seeding your champion into Centre Court…</div>
   </div>
 </div>
 
@@ -641,6 +711,11 @@ let reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
 let pickedSources=[]; // the locked reels' players → drive inherited clutch/stamina
 let mode='free', currentSeed='', dealCount=0, respinsLeft=DAILY_RESPINS;
 let runToken=0; // bumped each new game so an in-flight tournament reveal aborts cleanly
+let selectedTour='atp';   // 'atp' | 'wta' | 'both' — chosen via the top toggle before the game starts
+let gameStarted=false;    // false while the pre-start gate (blurred board + Start button) is showing
+const TOUR_LABEL={atp:'ATP', wta:'WTA', both:'Both'};
+// The pool the reels + the draw are dealt from — filtered by the chosen tour ('both' = everyone).
+function activeRoster(){ return selectedTour==='both'? ROSTER : ROSTER.filter(p=>p.t===selectedTour); }
 
 function lockedReels(){ return reels.filter(r=>r.locked); }
 function allLocked(){ return reels.every(r=>r.locked); }
@@ -670,12 +745,13 @@ function savedDaily(){try{return JSON.parse(localStorage.getItem(dailyKey()));}c
 // Deal distinct players onto every UNLOCKED reel for a given spin. Seeded per (seed, spin, reel)
 // so dailies are identical + shareable; locked reels keep their player.
 function dealReels(spinNo){
+  const pool=activeRoster();
   const taken=new Set(lockedReels().map(r=>r.player&&r.player.n));
   reels.forEach((r,i)=>{
     if(r.locked) return;
     const rng=mode==='daily'? makeRng(currentSeed+'|spin'+spinNo+'|reel'+i) : Math.random;
     let p, tries=0;
-    do{ p=ROSTER[Math.floor(rng()*ROSTER.length)]; tries++; }while(taken.has(p.n)&&tries<80);
+    do{ p=pool[Math.floor(rng()*pool.length)]; tries++; }while(taken.has(p.n)&&tries<80);
     taken.add(p.n); r.player=p;
   });
 }
@@ -765,6 +841,7 @@ function renderXfac(){
 // and drops onto its dealt player. Reels stop left→right so the board "lands" one at a time.
 function startSpin(spinningSet, justKey, onDone){
   const idxs=[...spinningSet].sort((a,b)=>a-b);
+  const pool=activeRoster();                          // legends that flash past match the chosen tour
   if(!idxs.length || prefersReducedMotion){          // respect reduced-motion / nothing to spin
     animating=false; renderReels(justKey, null, spinningSet); onDone&&onDone(); return;
   }
@@ -809,7 +886,7 @@ function startSpin(spinningSet, justKey, onDone){
           setPed(finalPlayer);
         }
       } else {                                       // flash a random legend (name, value + pedigree badge roll past)
-        const rp=ROSTER[Math.floor(Math.random()*ROSTER.length)];
+        const rp=pool[Math.floor(Math.random()*pool.length)];
         tok.innerHTML=tokenSVG(rp);
         pnm.innerHTML='<span class="roll">'+rp.n+'</span>';
         val.innerHTML='<span class="roll">'+rp[attrKey]+'</span>';
@@ -838,7 +915,7 @@ function lockReel(i){
   track('lock',{attr:r.key,value:r.player[r.key],source:r.player.n});
   if(allLocked()){                    // last shot picked → freeze the board and run the draw automatically
     renderReels(r.key);
-    startSimulation();
+    enterDraw();                       // brief "entering the draw" beat, then the tournament
     return;
   }
   dealCount++;                        // a pick auto-advances: re-deal the remaining unlocked reels (free)
@@ -900,6 +977,7 @@ function buildCardFront(champ, play){
   }).join('');
   $('ttFront').innerHTML=`
     <div class="tt-photo">
+      <div class="tt-tour">${TOUR_LABEL[play.tour]||'Both'}</div>
       <div class="tt-emblem">${championEmblemSVG(champ,play)}</div>
       ${badge}
     </div>
@@ -927,12 +1005,27 @@ function startFrontReveal(){
   const tt=$('ttFront'); tt.classList.add('reveal');           // rows slide in + bars grow (CSS)
   tt.querySelectorAll('[data-count]').forEach(el=>animateCount(el, +el.getAttribute('data-count'), 900));
 }
-// The result headline (champion / beaten + score + title odds) now lives on the finish screen.
+// The result headline (champion / beaten) now lives on the finish screen.
 function renderFinishVerdict(){
   const play=lastPlay; if(!play) return;
   $('finishVerdict').innerHTML = play.won
-    ? `<div class="verdict title">🏆 Wimbledon Champion</div><div class="verdict-sub">Score ${play.score} · title odds ${(play.titleOdds*100).toFixed(1)}%</div>`
-    : `<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div><div class="verdict-sub">Score ${play.score} · title odds going in ${(play.titleOdds*100).toFixed(1)}%</div>`;
+    ? `<div class="verdict title">🏆 Wimbledon Champion</div>`
+    : `<div class="verdict out">Beaten in the ${RD_NAME[play.reached]}</div>`;
+}
+
+// A short loading beat between locking the 6th shot and the tournament, so the jump into the
+// simulation doesn't feel abrupt. Fades in an overlay, holds briefly, then hands off to the sim.
+let drawIntroTimer=null;
+function enterDraw(){
+  const el=$('drawIntro');
+  const token=runToken;                                        // abort if a new game starts during the beat
+  el.classList.add('show'); el.setAttribute('aria-hidden','false');
+  clearTimeout(drawIntroTimer);
+  drawIntroTimer=setTimeout(()=>{
+    if(runToken!==token) return;                               // replay pressed mid-beat → do nothing
+    startSimulation();                                         // stage fades up over the intro
+    el.classList.remove('show'); el.setAttribute('aria-hidden','true');
+  }, prefersReducedMotion?200:1100);
 }
 
 // Enter Phase 2: show the stage, blow the card up (back facing) so the sim feels full-screen, play it, then reveal.
@@ -942,7 +1035,7 @@ function startSimulation(){
   lastChamp=champ; lastPlay=play; cardToken=runToken;
   const res={ won:play.won, reached:play.reached, score:play.score,
     rounds: play.rounds.map(r=>r.played?(r.win?'win':'loss'):'dnp'),
-    archetype: archetypeName(champ), clutch:champ.clutch, stam:champ.stam, titleOdds:play.titleOdds };
+    archetype: archetypeName(champ), clutch:champ.clutch, stam:champ.stam, titleOdds:play.titleOdds, tour:play.tour };
   lastRes=res;
   track('result',{mode,score:res.score,won:res.won,reached:res.reached,build:{...build},sources:pickedSources.map(p=>p.n),clutch:champ.clutch,stam:champ.stam,titleOdds:res.titleOdds});
   saveResult(res,champ);
@@ -984,14 +1077,14 @@ function revealCard(){
   const zoom=$('cardZoom'), card=$('card');
   const flip=()=>{
     if(runToken!==cardToken) return;
-    card.classList.add('flipped');
+    card.classList.add('flipped');                             // one-way flip: the sim (back) → the Top Trumps card (front)
     setTimeout(()=>{
       if(runToken!==cardToken) return;
-      card.classList.add('flippable');                         // now clickable to flip front⇄back
-      const st=$('stage'); st.classList.add('finished'); st.scrollTop=0;  // finish screen now scrolls (card + controls + play more)
+      const st=$('stage'); st.classList.add('finished'); st.scrollTop=0;  // finish screen now scrolls (card + controls + recap + play more)
       $('finishControls').classList.add('show');
       renderFinishVerdict();                                   // result headline appears with the finish screen
       startFrontReveal();
+      renderRecap();                                           // static round-by-round recap beneath "Play again"
     }, prefersReducedMotion?0:520);
   };
   if(prefersReducedMotion){ zoom.style.setProperty('--card-ty','0px'); zoom.style.setProperty('--card-scale','1'); flip(); return; }
@@ -1004,13 +1097,13 @@ function revealCard(){
 }
 
 
-// ============ THE RUN: seeded gauntlet, ascending difficulty, elite Bo5 final ============
+// ============ THE RUN: seeded gauntlet, ascending difficulty, best-of-five throughout ============
 const RD=['R1','R2','R3','R16','QF','SF','F'];
 const RD_NAME={R1:'first round',R2:'second round',R3:'third round',R16:'fourth round',QF:'quarter-finals',SF:'semi-finals',F:'final'};
 const RD_PTS=[10,15,20,30,45,65,120];
 function drawOpponents(rng){
   // round-tiered draw: like real seeding, the path ramps from beatable early to elite in the final
-  const sorted=[...ROSTER].sort((a,b)=>overall(a)-overall(b)); // weakest → strongest
+  const sorted=[...activeRoster()].sort((a,b)=>overall(a)-overall(b)); // weakest → strongest
   const n=sorted.length;
   const tiers=[[0,0.32],[0.06,0.42],[0.20,0.54],[0.36,0.68],[0.54,0.82],[0.74,0.94],[0.88,1.0]]; // R1…F
   const used=new Set(), picks=[];
@@ -1027,10 +1120,10 @@ function playTournament(champ){
   const opps=drawOpponents(drawRng);
   const playRng = mode==='daily'? makeRng(currentSeed+'|play') : Math.random;
   let score=0,titleOdds=1,alive=true,reached='',rounds=[];
+  const bo = selectedTour==='wta'? 3 : 5;   // WTA plays best-of-three; ATP & Both best-of-five
   opps.forEach((opp,i)=>{
-    const bo=(i===6)?5:3;                 // Bo5 final for drama + men's realism; Bo3 earlier for pace
+    if(!alive) return;                    // knocked out → don't sim (or reveal) the rounds you never reached
     const fat=roundFatigue(champ.stam,i); // you accumulate fatigue across the run; opponents are fresh
-    if(!alive){rounds.push({opp,played:false,bo,fat});return;}
     const oddsRng = mode==='daily'? makeRng(currentSeed+'|odds|'+i) : Math.random;
     const wp=winProb(champ,opp,bo,1000,oddsRng,fat); titleOdds*=wp;
     const m=simMatch(champ,opp,bo,playRng,fat);
@@ -1038,12 +1131,12 @@ function playTournament(champ){
     reached=RD[i];
     if(m.win) score+=RD_PTS[i]; else alive=false;
   });
-  return {opps,rounds,won:alive,reached,score,titleOdds};
+  return {opps,rounds,won:alive,reached,score,titleOdds,tour:selectedTour};
 }
 // Suspense reveal: play one match at a time (each slides in), reveal its sets one by one
 // as green (won) / red (lost) chips, then land the round and move on. onDone fires when the
 // whole run has finished revealing so the share card can appear afterwards.
-const T_SET=560, T_ROUND=460, T_DNP=110; // reveal cadence (ms)
+const T_SET=560, T_ROUND=460; // reveal cadence (ms)
 function renderRun(host,play,onDone){
   host.innerHTML='';
   const myToken=runToken;                       // abort if a new game starts mid-reveal
@@ -1051,7 +1144,7 @@ function renderRun(host,play,onDone){
   const done=()=>{ if(stale())return; onDone&&onDone(); };   // verdict now shows on the finish screen
 
   if(prefersReducedMotion){                      // no animation: render the whole run at once
-    play.rounds.forEach((r,i)=>host.appendChild(buildRow(r,i,true)));
+    play.rounds.forEach((r,i)=>host.appendChild(buildRoundRow(r,i,true)));
     done(); return;
   }
 
@@ -1060,14 +1153,10 @@ function renderRun(host,play,onDone){
     if(stale()) return;
     if(idx>=play.rounds.length){ done(); return; }
     const r=play.rounds[idx], i=idx; idx++;
-    const row=buildRow(r,i,false);
+    const row=buildRoundRow(r,i,false);
     host.appendChild(row);
     requestAnimationFrame(()=>{ if(!stale()) row.classList.add('in'); }); // trigger slide-in
     row.scrollIntoView({behavior:'smooth', block:'nearest'});
-    if(!r.played){                               // knocked out earlier → flash the unplayed rounds by
-      row.querySelector('.sets').innerHTML='<span class="dash">—</span>';
-      setTimeout(step, T_DNP); return;
-    }
     row.classList.add('active');                 // "match in progress"
     revealSets(row, r, 0, ()=>{
       if(stale()) return;
@@ -1087,21 +1176,23 @@ function renderRun(host,play,onDone){
     row.querySelector('.sets').appendChild(box);
     setTimeout(()=>revealSets(row, r, si+1, finished), T_SET);
   }
-  function buildRow(r,i,instant){
-    const ov=overall(r.opp);
-    const div=document.createElement('div');
-    if(!r.played){
-      div.className='round dnp'+(instant?'':' appear');
-      div.innerHTML=`<div class="rd">${RD[i]}</div><div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div><div class="sets">${instant?'<span class="dash">—</span>':''}</div>`;
-      return div;
-    }
-    div.className='round '+(instant?(r.win?'win':'loss'):'appear');
-    const setsHTML = instant? r.sets.map(s=>`<span class="set ${s[0]>s[1]?'w':'l'}">${s[0]}-${s[1]}</span>`).join('') : '';
-    div.innerHTML=`<div class="rd">${RD[i]}${r.bo===5?'<span class="bo5">Bo5</span>':''}</div>
-      <div class="opp"><div class="nm">${r.opp.n}</div><div class="ov">OVR ${ov.toFixed(0)}</div></div>
-      <div class="sets">${setsHTML}</div>`;
-    return div;
-  }
+}
+// One round row: head line (round label · opponent · their overall) with the set chips underneath.
+function buildRoundRow(r,i,instant){
+  const ov=overall(r.opp);
+  const div=document.createElement('div');
+  div.className='round '+(instant?(r.win?'win':'loss'):'appear');
+  const setsHTML = instant? r.sets.map(s=>`<span class="set ${s[0]>s[1]?'w':'l'}">${s[0]}-${s[1]}</span>`).join('') : '';
+  div.innerHTML=`<div class="head"><span class="rd">${RD[i]}</span><span class="nm">${r.opp.n}</span><span class="ov">OVR ${ov.toFixed(0)}</span></div>
+    <div class="sets">${setsHTML}</div>`;
+  return div;
+}
+// Static recap of the run (no animation), shown on the finish screen beneath "Play again"
+// now that the card no longer flips back to reveal the live simulation.
+function renderRecap(){
+  const host=$('recap'); if(!host || !lastPlay) return;
+  host.innerHTML='<div class="recap-title">Your run</div>';
+  lastPlay.rounds.forEach((r,i)=>host.appendChild(buildRoundRow(r,i,true)));
 }
 function archetypeName(a){
   const entries=[['Cannon',a.serve],['Wall',a.ret],['Hammer',a.fh],['Blade',a.bh],['Net Rusher',a.net],['Metronome',a.con]];
@@ -1112,10 +1203,11 @@ function archetypeName(a){
   return 'The '+name+suffix;
 }
 function shareText(res){
-  const head = mode==='daily'? `Build-a-Champion · Wimbledon — Daily #${dailyNumber()}` : `Build-a-Champion · Wimbledon`;
+  const tour = res.tour? ' · '+TOUR_LABEL[res.tour] : '';
+  const head = (mode==='daily'? `Build-a-Champion · Wimbledon — Daily #${dailyNumber()}` : `Build-a-Champion · Wimbledon`) + tour;
   const grid = res.rounds.map(r=> r==='win'?'🟩': r==='loss'?'🟥':'⬛').join('');
   const out = res.won? '🏆 CHAMPION' : `Out · ${RD_NAME[res.reached]}`;
-  const lines=[head, `${out} — Score ${res.score}`, grid, `${res.archetype} · Composure ${meter(res.clutch)} Stamina ${meter(res.stam)}`];
+  const lines=[head, out, grid, `${res.archetype} · Composure ${meter(res.clutch)} Stamina ${meter(res.stam)}`];
   if(SHARE_URL) lines.push(SHARE_URL);
   return lines.join('\n');
 }
@@ -1176,6 +1268,13 @@ async function renderCardImage(){
   else { x.fillStyle=P.raised; x.fill(); }
   roundRectPath(x,bx,by,bw,bh,bh/2); x.lineWidth=1.5; x.strokeStyle = won?P.gold : (isFinalist?P.silver:P.border); x.stroke();
   x.fillStyle=badgeCol; x.textAlign='center'; x.textBaseline='middle'; x.fillText(bt,W/2,by+bh/2+1);
+
+  // tour tag (top-left of the photo area): ATP / WTA / Both — purple UI pill
+  const tourTxt=TOUR_LABEL[play.tour]||'Both';
+  x.font='500 22px Inter'; const tpw=x.measureText(tourTxt).width+30, tph=38, tpx=inset+16, tpy=inset+16;
+  roundRectPath(x,tpx,tpy,tpw,tph,tph/2); x.fillStyle=P.purpleDeep; x.fill();
+  x.fillStyle=P.purpleOn; x.textAlign='center'; x.textBaseline='middle'; x.fillText(tourTxt,tpx+tpw/2,tpy+tph/2+1);
+  x.textAlign='left'; x.textBaseline='alphabetic';
 
   // purple name banner (Top Trumps signature)
   let y=inset+photoH; const bannerH=66;
@@ -1254,26 +1353,57 @@ function renderConsent(){
 
 // ============ wiring + init ============
 $('spinBtn').addEventListener('click',respin);
-$('card').addEventListener('click',()=>{ if($('card').classList.contains('flippable')) $('card').classList.toggle('flipped'); });
 $('shareBtn').addEventListener('click',shareCard);
+$('startBtn').addEventListener('click',beginGame);
 $('playAgainBtn').addEventListener('click',()=>{ startGame(); window.scrollTo({top:0,behavior:'smooth'}); });
+
+// Tour toggle: pick ATP / WTA / Both before starting. Locked once the game begins.
+function setTour(t){
+  if(gameStarted) return;
+  selectedTour=t;
+  document.querySelectorAll('.tour-opt').forEach(b=>{
+    const on=b.dataset.tour===t; b.classList.toggle('active',on); b.setAttribute('aria-pressed', on?'true':'false');
+  });
+  dealReels(0); renderReels(null);        // refresh the (blurred) preview board for the chosen tour
+}
+function setToggleEnabled(on){ document.querySelectorAll('.tour-opt').forEach(b=>{ b.disabled=!on; }); }
+document.querySelectorAll('.tour-opt').forEach(b=> b.addEventListener('click',()=>setTour(b.dataset.tour)) );
+
+// startGame() shows the pre-start gate: the board sits blurred behind one "Start game" CTA.
 function startGame(){
   runToken++;                          // invalidate any tournament reveal still animating
+  gameStarted=false;
   for(const k in build) build[k]=null; for(const k in source) delete source[k];
   reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
   pickedSources=[]; dealCount=0; respinsLeft=DAILY_RESPINS;
+  clearTimeout(drawIntroTimer);        // cancel any in-flight "entering the draw" beat
+  const drawIntro=$('drawIntro'); drawIntro.classList.remove('show'); drawIntro.setAttribute('aria-hidden','true');
   const stage=$('stage'); stage.classList.remove('show','finished'); stage.setAttribute('aria-hidden','true');
   document.body.classList.remove('locked');
   $('card').classList.remove('flipped','flippable');
   $('cardZoom').style.setProperty('--card-scale','1');
   $('finishControls').classList.remove('show');
   $('ttFront').classList.remove('reveal');
-  $('simRun').innerHTML=''; $('ttFront').innerHTML=''; $('finishVerdict').innerHTML='';
+  $('simRun').innerHTML=''; $('ttFront').innerHTML=''; $('finishVerdict').innerHTML=''; $('recap').innerHTML='';
   currentSeed='free-'+Date.now()+'-'+Math.floor(Math.random()*1e9);
   $('draftPanel').style.display='block';
-  dealReels(0);                        // first deal is free — reels roll in on load
+  setToggleEnabled(true);              // let the player change tour again before starting
+  $('draftInner').classList.add('blurred');
+  $('startOverlay').classList.add('show');
+  dealReels(0); renderReels(null);     // static preview sits blurred behind the gate
+}
+
+// beginGame(): the Start button un-blurs the board, locks the toggle, and spins the reels for real.
+function beginGame(){
+  if(gameStarted) return;
+  gameStarted=true;
+  setToggleEnabled(false);
+  $('startOverlay').classList.remove('show');
+  $('draftInner').classList.remove('blurred');
+  dealCount=0;
+  dealReels(0);                        // fresh deal for the opening spin
   startSpin(new Set(reels.map((r,i)=>i)), null);
-  track('game_start',{mode});
+  track('game_start',{mode,tour:selectedTour});
 }
 
 initAnalytics();
