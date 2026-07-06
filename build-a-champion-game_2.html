@@ -84,15 +84,15 @@
         "tok cat val"
         "tok pnm val"
         "tok ped val";
-      column-gap:var(--space-4); row-gap:2px; align-items:center;
-      text-align:left; min-height:0; padding:var(--space-3) var(--space-4);
+      column-gap:var(--space-4); row-gap:1px; align-items:center;
+      text-align:left; min-height:0; padding:var(--space-2) var(--space-4);
     }
-    .reel .cat{ grid-area:cat; align-self:end; }
-    .reel .tok{ grid-area:tok; width:58px; height:58px; }
-    /* fixed 2-line name box: reels stay the same height whatever legend flashes past,
-       so the spin animation no longer makes the cards jump around on mobile */
-    .reel .pnm{ grid-area:pnm; height:2.4em; min-height:0; overflow:hidden; justify-content:flex-start; font-size:var(--text-sm); }
-    .reel .ped{ grid-area:ped; justify-self:start; align-self:start; }
+    .reel .cat{ grid-area:cat; align-self:end; line-height:1.1; }
+    .reel .tok{ grid-area:tok; width:48px; height:48px; }
+    /* fixed 2-line name box (tightened): reels keep a constant height whatever legend
+       flashes past, so the spin animation never makes the cards jump on mobile */
+    .reel .pnm{ grid-area:pnm; height:2.2em; line-height:1.1; min-height:0; overflow:hidden; justify-content:flex-start; font-size:var(--text-sm); }
+    .reel .ped{ grid-area:ped; justify-self:start; align-self:start; line-height:1.25; }
     .reel .val{ grid-area:val; font-size:var(--text-2xl); text-align:right; }
 
     /* respin controls stack: full-width button, locked-count centred underneath.
