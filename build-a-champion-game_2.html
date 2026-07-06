@@ -352,9 +352,9 @@
 
   <!-- Tour toggle: choose the field before starting. WTA plays best-of-three; ATP & Both best-of-five. -->
   <div class="tour-toggle" id="tourToggle" role="group" aria-label="Choose tour">
-    <button type="button" class="tour-opt active" data-tour="atp" aria-pressed="true">ATP<span class="bo">Bo5</span></button>
+    <button type="button" class="tour-opt" data-tour="atp" aria-pressed="false">ATP<span class="bo">Bo5</span></button>
     <button type="button" class="tour-opt" data-tour="wta" aria-pressed="false">WTA<span class="bo">Bo3</span></button>
-    <button type="button" class="tour-opt" data-tour="both" aria-pressed="false">Both<span class="bo">Bo5</span></button>
+    <button type="button" class="tour-opt active" data-tour="both" aria-pressed="true">Both<span class="bo">Bo5</span></button>
   </div>
 
   <div class="panel" id="draftPanel">
@@ -711,7 +711,7 @@ let reels=ATTRS.map(at=>({key:at.k, player:null, locked:false}));
 let pickedSources=[]; // the locked reels' players → drive inherited clutch/stamina
 let mode='free', currentSeed='', dealCount=0, respinsLeft=DAILY_RESPINS;
 let runToken=0; // bumped each new game so an in-flight tournament reveal aborts cleanly
-let selectedTour='atp';   // 'atp' | 'wta' | 'both' — chosen via the top toggle before the game starts
+let selectedTour='both';   // 'atp' | 'wta' | 'both' — chosen via the top toggle before the game starts
 let gameStarted=false;    // false while the pre-start gate (blurred board + Start button) is showing
 const TOUR_LABEL={atp:'ATP', wta:'WTA', both:'Both'};
 // The pool the reels + the draw are dealt from — filtered by the chosen tour ('both' = everyone).
