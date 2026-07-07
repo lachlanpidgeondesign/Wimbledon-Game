@@ -6,7 +6,7 @@
 <title>Build-a-Champion — Wimbledon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Literata:opsz,wght@7..72,500;7..72,600&family=Lora:ital,wght@0,400;0,500;1,400&display=swap">
 <!-- Design tokens: the single source of truth for colour, type, spacing & radius (see tokens.css). -->
 <link rel="stylesheet" href="tokens.css">
 <style>
@@ -272,7 +272,7 @@
   .tt-badge.run{ background:var(--surface-raised); color:var(--text-muted); border-color:var(--border); }
   .tt-badge.finalist{ background:color-mix(in srgb, var(--silver) 16%, transparent); color:var(--silver); border-color:color-mix(in srgb, var(--silver) 55%, transparent); }
   .tt-badge.champ{ background:color-mix(in srgb, var(--gold) 22%, transparent); color:var(--gold); border-color:var(--gold); }
-  /* tour tag (top-left of the card) — which field you built in: ATP / WTA / Both (purple UI pill) */
+  /* tour tag (top-left of the card) — which field you built in: Men's / Women's / All (purple UI pill) */
   .tt-tour{ position:absolute; top:var(--space-2); left:var(--space-2); z-index:1;
     font-size:var(--text-xs); font-weight:var(--weight-medium); letter-spacing:.05em;
     padding:2px var(--space-2); border-radius:var(--radius-pill);
@@ -310,31 +310,58 @@
   .finish-verdict .verdict{ margin:0; }
   .finish-controls .spin{ width:100%; }
   .finish-controls .copybtn{ width:100%; text-align:center; }
-  /* tournament recap — the round-by-round run, shown statically beneath "Play again" */
-  .recap{ width:100%; margin-top:var(--space-2); }
+  /* tournament recap — the round-by-round run (below "Play again" on mobile, right of the card on desktop) */
+  .recap{ width:min(86vw,360px); }
   .recap-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-lg);
     text-align:center; margin:0 0 var(--space-3); color:var(--text); }
+  /* recap + play-more sit outside .finish-controls now — gate them to the finish screen so they stay hidden during the sim */
+  .recap, .playmore{ opacity:0; pointer-events:none; transition:opacity .45s ease; }
+  .stage.finished .recap, .stage.finished .playmore{ opacity:1; pointer-events:auto; }
 
   /* "Play more" — cross-promo link cards to sibling games (accent = link colour; surfaces stay neutral) */
-  .playmore{ width:100%; margin-top:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3); }
+  .playmore{ width:min(86vw,360px); display:flex; flex-direction:column; gap:var(--space-3); }
   .playmore-title{ font-family:var(--font-display); font-weight:var(--weight-medium); font-size:var(--text-xl);
     text-align:center; margin:0 0 var(--space-1); color:var(--text); }
   .pm-card{ display:flex; align-items:center; gap:var(--space-4); text-decoration:none; color:inherit;
-    background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md);
-    padding:var(--space-3) var(--space-4); transition:transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
-  .pm-card:hover{ transform:translateY(-2px); }
-  .pm-card:active{ transform:translateY(0); }
-  .pm-icon{ flex:0 0 auto; width:52px; height:52px; border-radius:var(--radius-sm);
-    display:flex; align-items:center; justify-content:center; }
-  .pm-icon svg{ width:62%; height:62%; display:block; }
+    background:var(--pm-bg); border:1px solid var(--pm-edge); border-radius:var(--radius-md);
+    padding:var(--space-3) var(--space-4); box-shadow:0 2px 0 0 var(--pm-edge);
+    transition:transform .16s ease, box-shadow .16s ease; }
+  .pm-card:hover{ transform:translateY(-2px); box-shadow:0 4px 0 0 var(--pm-edge); }
+  .pm-card:active{ transform:translateY(0); box-shadow:0 2px 0 0 var(--pm-edge); }
+  .pm-icon{ flex:0 0 auto; width:52px; height:52px; border-radius:var(--radius-sm); overflow:hidden;
+    display:flex; align-items:center; justify-content:center; background:var(--pm-icon-bg); }
+  .pm-icon img{ width:74%; height:74%; display:block; }
   .pm-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-  .pm-name{ font-weight:var(--weight-medium); font-size:var(--text-base); color:var(--text); line-height:1.25; }
-  .pm-desc{ font-size:var(--text-sm); color:var(--text-muted); line-height:1.3; }
-  /* each game keeps its own accent on the icon tile only */
-  .pm-green .pm-icon{ background:color-mix(in srgb, var(--green) 20%, var(--surface-raised)); color:var(--green); }
-  .pm-green:hover{ border-color:var(--green); box-shadow:0 12px 26px -16px color-mix(in srgb, var(--green) 60%, transparent); }
-  .pm-purple .pm-icon{ background:color-mix(in srgb, var(--purple-deep) 45%, var(--surface-raised)); color:var(--purple); }
-  .pm-purple:hover{ border-color:var(--purple); box-shadow:0 12px 26px -16px color-mix(in srgb, var(--purple) 55%, transparent); }
+  /* puzzle title uses each linked game's own display face (Literata) — intentionally outside the game's tokens */
+  .pm-name{ font-family:'Literata', Georgia, serif; font-weight:600; font-size:var(--text-lg); color:var(--pm-name); line-height:1.2; }
+  .pm-desc{ font-size:var(--text-sm); color:var(--pm-desc); line-height:1.3; }
+  /* Cross-promo cards carry each linked game's OWN brand palette — intentionally outside the game's design tokens. */
+  .pm-guessword{ --pm-bg:#FEF7EC; --pm-edge:#F8CD8B; --pm-icon-bg:#F8CD8B; --pm-name:#5A4216; --pm-desc:#96742F; }
+  .pm-colorconnect{ --pm-bg:#EEF0FF; --pm-edge:#9AA3FF; --pm-icon-bg:#9AA3FF; --pm-name:#2E3690; --pm-desc:#5B63B0; }
+
+  /* Desktop: card (left) + "Your run" recap (right) sit side-by-side as a centred pair (row 1).
+     The verdict, controls and play-more all sit centred below them as a single column (rows 2–3).
+     Two outer 1fr gaps keep the pair centred; controls/playmore span both inner columns so they
+     centre under the midpoint of the pair. */
+  @media (min-width:880px){
+    .stage.finished .stage-inner{
+      display:grid; width:100%;
+      grid-template-columns:1fr auto auto 1fr;
+      grid-template-areas:
+        "gapL card      recap     gapR"
+        ".    controls  controls  ."
+        ".    playmore  playmore  .";
+      align-items:start; justify-items:center;
+      column-gap:var(--space-6); row-gap:var(--space-4);
+    }
+    .stage.finished .card-zoom{ grid-area:card; }
+    .stage.finished .finish-controls{ grid-area:controls; }
+    .stage.finished .playmore{ grid-area:playmore; }
+    /* card format for "Your run" — desktop only (mobile keeps it as a plain list under Play again) */
+    .stage.finished .recap{ grid-area:recap; align-self:start; width:360px;
+      background:var(--surface-raised); border:1px solid var(--border); border-radius:var(--radius-md); padding:var(--space-4); }
+    .stage.finished .recap .round:last-child{ margin-bottom:0; }
+  }
 
   @media (prefers-reduced-motion: reduce){
     .stage, .card-zoom, .card-inner{ transition:none; }
@@ -350,11 +377,11 @@
 <div class="wrap">
   <div class="sub">Six reels, six shots. Each spin deals a different legend from 20 years of Wimbledon into every category. Pick one shot to lock it in and the reels re-deal automatically — you get three respins if you don't fancy the hand. Fill all six and you're straight into the draw.</div>
 
-  <!-- Tour toggle: choose the field before starting. WTA plays best-of-three; ATP & Both best-of-five. -->
+  <!-- Tour toggle: choose the field before starting. Women's plays best-of-three; Men's & All best-of-five. -->
   <div class="tour-toggle" id="tourToggle" role="group" aria-label="Choose tour">
-    <button type="button" class="tour-opt" data-tour="atp" aria-pressed="false">ATP<span class="bo">Bo5</span></button>
-    <button type="button" class="tour-opt" data-tour="wta" aria-pressed="false">WTA<span class="bo">Bo3</span></button>
-    <button type="button" class="tour-opt active" data-tour="both" aria-pressed="true">Both<span class="bo">Bo5</span></button>
+    <button type="button" class="tour-opt" data-tour="atp" aria-pressed="false">Men's<span class="bo">Bo5</span></button>
+    <button type="button" class="tour-opt" data-tour="wta" aria-pressed="false">Women's<span class="bo">Bo3</span></button>
+    <button type="button" class="tour-opt active" data-tour="both" aria-pressed="true">All<span class="bo">Bo5</span></button>
   </div>
 
   <div class="panel" id="draftPanel">
@@ -407,45 +434,29 @@
       <div class="finish-verdict" id="finishVerdict"></div>
       <button class="copybtn" id="shareBtn">Share your card</button>
       <button class="spin" id="playAgainBtn">🎾 Play again</button>
-      <div class="recap" id="recap" aria-label="Your tournament recap"></div>
-      <section class="playmore" aria-label="More games to play">
-        <h2 class="playmore-title">Play more</h2>
-        <a class="pm-card pm-green" href="#" rel="noopener">
-          <span class="pm-icon">
-            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <circle cx="9" cy="9" r="4.2" fill="currentColor"/>
-              <circle cx="20" cy="9" r="4.2" stroke="currentColor" stroke-width="2.2"/>
-              <circle cx="31" cy="9" r="4.2" stroke="currentColor" stroke-width="2.2"/>
-              <circle cx="9" cy="20" r="4.2" stroke="currentColor" stroke-width="2.2"/>
-              <circle cx="20" cy="20" r="4.2" fill="currentColor"/>
-              <circle cx="31" cy="20" r="4.2" stroke="currentColor" stroke-width="2.2"/>
-              <circle cx="9" cy="31" r="4.2" stroke="currentColor" stroke-width="2.2"/>
-              <circle cx="20" cy="31" r="4.2" stroke="currentColor" stroke-width="2.2"/>
-              <circle cx="31" cy="31" r="4.2" fill="currentColor"/>
-            </svg>
-          </span>
-          <span class="pm-text">
-            <span class="pm-name">GuessWord</span>
-            <span class="pm-desc">Decipher in six attempts — or you're out</span>
-          </span>
-        </a>
-        <a class="pm-card pm-purple" href="#" rel="noopener">
-          <span class="pm-icon">
-            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
-              <path d="M10 27 L17 14 L26 26 L31 12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="10" cy="27" r="3.3" fill="currentColor"/>
-              <circle cx="17" cy="14" r="3.3" fill="currentColor"/>
-              <circle cx="26" cy="26" r="3.3" fill="currentColor"/>
-              <circle cx="31" cy="12" r="3.3" fill="currentColor"/>
-            </svg>
-          </span>
-          <span class="pm-text">
-            <span class="pm-name">Colour Connect</span>
-            <span class="pm-desc">Join the dots</span>
-          </span>
-        </a>
-      </section>
     </div>
+    <div class="recap" id="recap" aria-label="Your tournament recap"></div>
+    <section class="playmore" aria-label="More games to play">
+      <h2 class="playmore-title">Play more</h2>
+      <a class="pm-card pm-guessword" href="https://www.dailymail.com/games/game/index.html?game=guessword&meta=guessword&type=default" target="_blank" rel="noopener">
+        <span class="pm-icon">
+          <img src="guessword-icon.svg" width="52" height="52" alt="" aria-hidden="true" />
+        </span>
+        <span class="pm-text">
+          <span class="pm-name">GuessWord</span>
+          <span class="pm-desc">Decipher in six attempts — or you're out</span>
+        </span>
+      </a>
+      <a class="pm-card pm-colorconnect" href="https://www.dailymail.com/games/game/index.html?game=color-connect&type=aW50ZWdyYXRpb24x" target="_blank" rel="noopener">
+        <span class="pm-icon">
+          <img src="colour-connect-icon.svg" width="52" height="52" alt="" aria-hidden="true" />
+        </span>
+        <span class="pm-text">
+          <span class="pm-name">Colour Connect</span>
+          <span class="pm-desc">Join the dots</span>
+        </span>
+      </a>
+    </section>
   </div>
 </div>
 
@@ -713,7 +724,7 @@ let mode='free', currentSeed='', dealCount=0, respinsLeft=DAILY_RESPINS;
 let runToken=0; // bumped each new game so an in-flight tournament reveal aborts cleanly
 let selectedTour='both';   // 'atp' | 'wta' | 'both' — chosen via the top toggle before the game starts
 let gameStarted=false;    // false while the pre-start gate (blurred board + Start button) is showing
-const TOUR_LABEL={atp:'ATP', wta:'WTA', both:'Both'};
+const TOUR_LABEL={atp:"Men's", wta:"Women's", both:'All'};
 // The pool the reels + the draw are dealt from — filtered by the chosen tour ('both' = everyone).
 function activeRoster(){ return selectedTour==='both'? ROSTER : ROSTER.filter(p=>p.t===selectedTour); }
 
@@ -977,7 +988,7 @@ function buildCardFront(champ, play){
   }).join('');
   $('ttFront').innerHTML=`
     <div class="tt-photo">
-      <div class="tt-tour">${TOUR_LABEL[play.tour]||'Both'}</div>
+      <div class="tt-tour">${TOUR_LABEL[play.tour]||'All'}</div>
       <div class="tt-emblem">${championEmblemSVG(champ,play)}</div>
       ${badge}
     </div>
@@ -1270,7 +1281,7 @@ async function renderCardImage(){
   x.fillStyle=badgeCol; x.textAlign='center'; x.textBaseline='middle'; x.fillText(bt,W/2,by+bh/2+1);
 
   // tour tag (top-left of the photo area): ATP / WTA / Both — purple UI pill
-  const tourTxt=TOUR_LABEL[play.tour]||'Both';
+  const tourTxt=TOUR_LABEL[play.tour]||'All';
   x.font='500 22px Inter'; const tpw=x.measureText(tourTxt).width+30, tph=38, tpx=inset+16, tpy=inset+16;
   roundRectPath(x,tpx,tpy,tpw,tph,tph/2); x.fillStyle=P.purpleDeep; x.fill();
   x.fillStyle=P.purpleOn; x.textAlign='center'; x.textBaseline='middle'; x.fillText(tourTxt,tpx+tpw/2,tpy+tph/2+1);
